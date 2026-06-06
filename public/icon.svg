@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wildfowl in flight">
+  <rect width="512" height="512" rx="112" fill="#2e6b4f"/>
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M104 296 Q188 200 256 296 Q324 200 408 296" stroke-width="30"/>
+    <path d="M180 372 Q224 326 264 372 Q304 326 348 372" stroke-width="20" opacity="0.85"/>
+  </g>
+</svg>
