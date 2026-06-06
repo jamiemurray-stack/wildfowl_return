@@ -13,16 +13,18 @@ A bottom tab bar with three tabs:
 | Tab | Icon | What it does |
 | --- | --- | --- |
 | **Submit** | 📋 | The main form. Members log a visit: membership number, date, location (Sands / Marshes), a stepper for each of the seven quarry species, a "Nil return" toggle, a live "Total shot" total, and optional notes. |
-| **Report** | ⚠️ | Season summary: total returns, total birds, nil returns, plus breakdowns by species and by location. |
-| **History** | 📊 | A list of every past return (date, location, total). Tap any row to see the full record. |
+| **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
+| **Admin** | 📊 | Password-gated panel with three sub-views: **Season Report** (visual totals — stat tiles plus bar charts by species, location and month), **Returns** (every bag return; tap for the full record), and **Issues** (everything reported via the Report tab). |
 
-**Report** and **History** aggregate every member's data, so both are behind a
-password gate (`M4rkJ0n3s`). The unlock lasts for the browser session. **Submit**
-is open to all members.
+**Submit** and **Report** are open to all members. The **Admin** panel aggregates
+every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock
+lasts for the browser session.
 
 ## Data
 
-One table, `bag_returns`, in Supabase:
+Two tables in Supabase.
+
+### `bag_returns`
 
 | Column | Type | Notes |
 | --- | --- | --- |
@@ -38,6 +40,16 @@ One table, `bag_returns`, in Supabase:
 `total_shot` is a Postgres `GENERATED ALWAYS … STORED` column, so the total is
 always computed by the database and can't drift from the species counts.
 
+### `issue_reports`
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| `membership_number` | text | optional (reports may be anonymous) |
+| `category` | text | Safety, Access / Gates, Disturbance, Wildlife / Conservation, App / Feedback, Other |
+| `location` | text | optional — `Sands`, `Marshes` or `Elsewhere` |
+| `description` | text | the issue |
+| `submitted_at` | timestamptz | set automatically on insert |
+
 ## Security model
 
 This is a club app with no member logins, so it uses Supabase's **publishable**
@@ -45,13 +57,14 @@ key in the browser (safe by design — it's not a secret). Access is controlled 
 **Row Level Security**:
 
 - **Insert** — allowed for everyone (members submit without an account).
-- **Select** — allowed for everyone (the admin views are gated client-side).
-- **Update / Delete** — no policy, so submitted returns are **immutable** via the
+- **Select** — allowed for everyone (the Admin panel is gated client-side).
+- **Update / Delete** — no policy, so submitted rows are **immutable** via the
   app; they can only be changed from the Supabase dashboard.
 
-The `M4rkJ0n3s` password is a lightweight client-side gate on the admin tabs, not
-a server-side protection. If you later want true protection (e.g. so only an
-admin can read all returns), add Supabase Auth and tighten the `select` policy.
+Both `bag_returns` and `issue_reports` use this same model. The `M4rkJ0n3s`
+password is a lightweight client-side gate on the Admin panel, not a server-side
+protection. If you later want true protection (e.g. so only an admin can read all
+data), add Supabase Auth and tighten the `select` policies.
 
 ## Local development
 
@@ -81,10 +94,12 @@ Supabase credentials are bundled; set `VITE_SUPABASE_URL` /
 
 ```
 src/
-  components/   TabBar, Stepper, Segmented, AdminGate
-  screens/      SubmitScreen, ReportScreen, HistoryScreen
-  lib/          supabase client, season helpers, admin gate, data hook
-  data/         species definitions
+  components/   TabBar, Stepper, Segmented, AdminGate,
+                SeasonReport, ReturnsList, IssuesList
+  screens/      SubmitScreen, ReportIssueScreen, AdminScreen
+  lib/          supabase client, season helpers, admin gate,
+                membership store, bag-returns & issue-reports hooks
+  data/         species & issue-category definitions
   types.ts      shared types
   styles.css    all styling
 ```

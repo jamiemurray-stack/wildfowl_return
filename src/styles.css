@@ -68,46 +68,46 @@ button:focus-visible,
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  padding: 16px 16px
-    calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 24px);
+  padding: 22px 16px
+    calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 28px);
 }
 
 .screen {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 /* ---- Header ---- */
 .app-header {
   text-align: center;
-  padding: 6px 4px 2px;
+  padding: 6px 4px 8px;
 }
 
 .app-title {
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--brand-dark);
 }
 
 .app-subtitle {
   font-size: 15px;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .app-caption {
   font-size: 13px;
   color: var(--muted);
-  margin-top: 2px;
+  margin-top: 5px;
 }
 
 /* ---- Banners ---- */
 .banner {
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 13px 14px;
   font-size: 14px;
   font-weight: 600;
 }
@@ -129,7 +129,7 @@ button:focus-visible,
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 18px;
   box-shadow: var(--shadow);
 }
 
@@ -139,14 +139,14 @@ button:focus-visible,
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .card-head .card-title {
@@ -166,14 +166,14 @@ button:focus-visible,
 }
 
 .field + .field {
-  margin-top: 14px;
+  margin-top: 18px;
 }
 
 .field-label {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 
 .input {
@@ -195,15 +195,24 @@ button:focus-visible,
 
 .textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 88px;
   line-height: 1.5;
+}
+
+/* Native select with a custom chevron. */
+.select {
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%236c7a72' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px;
 }
 
 .field-error {
   display: block;
   color: var(--danger);
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 7px;
   font-weight: 500;
 }
 
@@ -242,7 +251,7 @@ button:focus-visible,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0;
+  padding: 13px 0;
   gap: 12px;
 }
 
@@ -303,8 +312,8 @@ button:focus-visible,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 6px;
-  padding-top: 14px;
+  margin-top: 8px;
+  padding-top: 16px;
   border-top: 1px solid var(--line);
   cursor: pointer;
 }
@@ -363,8 +372,8 @@ button:focus-visible,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid var(--line);
 }
 
@@ -387,7 +396,7 @@ button:focus-visible,
   justify-content: center;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 14px 18px;
+  padding: 15px 18px;
   font-weight: 700;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -409,6 +418,7 @@ button:focus-visible,
 
 .btn-block {
   width: 100%;
+  margin-top: 2px;
 }
 
 .btn-link {
@@ -470,16 +480,12 @@ button:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 2px 2px 4px;
+  padding: 2px 2px 0;
 }
 
 .screen-title {
   font-size: 22px;
   font-weight: 800;
-}
-
-.header-spacer {
-  width: 44px;
 }
 
 .back-btn {
@@ -489,6 +495,26 @@ button:focus-visible,
   font-weight: 600;
   cursor: pointer;
   padding: 4px 0;
+  align-self: flex-start;
+}
+
+/* Sub-header row: a caption/count on the left, a refresh link on the right. */
+.subhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 22px;
+}
+
+.subhead .app-caption {
+  margin-top: 0;
+}
+
+.muted-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* ---- Report stats ---- */
@@ -502,7 +528,7 @@ button:focus-visible,
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 14px 8px;
+  padding: 16px 8px;
   text-align: center;
   box-shadow: var(--shadow);
 }
@@ -520,6 +546,108 @@ button:focus-visible,
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
+}
+
+/* ---- Bar charts ---- */
+.bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 30px;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
+}
+
+.bar-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.bar-track {
+  height: 14px;
+  background: var(--brand-tint);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.bar-fill-alt {
+  background: #6a9d80;
+}
+
+.bar-value {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Monthly column chart ---- */
+.months {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.month-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.month-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.month-bar-wrap {
+  width: 68%;
+  height: 92px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.month-bar {
+  width: 100%;
+  background: var(--brand);
+  border-radius: 6px 6px 0 0;
+  transition: height 0.3s ease;
+}
+
+.month-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 /* ---- Tables ---- */
@@ -550,15 +678,6 @@ button:focus-visible,
   font-variant-numeric: tabular-nums;
   min-width: 32px;
   text-align: right;
-}
-
-.table-meta {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.table-total {
-  font-weight: 700;
 }
 
 /* ---- History list ---- */
@@ -635,6 +754,61 @@ button:focus-visible,
   color: #b9c2bb;
   font-size: 22px;
   line-height: 1;
+}
+
+/* ---- Issues list ---- */
+.issue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.issue-card {
+  padding: 14px 16px;
+}
+
+.issue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.pill-cat {
+  background: #fdeee3;
+  color: #9a4a1e;
+}
+
+.issue-date {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.issue-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.issue-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.issue-tag {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 10px;
 }
 
 /* ---- Detail ---- */

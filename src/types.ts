@@ -16,3 +16,13 @@ export type BagReturn = {
 
 /** Payload sent on insert (server fills total_shot + submitted_at). */
 export type BagReturnInsert = Omit<BagReturn, 'id' | 'total_shot' | 'submitted_at'>
+
+/** A row in the Supabase `issue_reports` table. */
+export type IssueReport = {
+  id: string
+  membership_number: string | null
+  category: string
+  location: string | null
+  description: string
+  submitted_at: string // ISO timestamp
+}

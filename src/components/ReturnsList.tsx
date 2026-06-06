@@ -1,19 +1,10 @@
 import { useState } from 'react'
-import { AdminGate } from '../components/AdminGate'
 import { useBagReturns } from '../lib/useBagReturns'
 import { SPECIES } from '../data/species'
 import { formatDate, formatDateTime } from '../lib/season'
 import type { BagReturn } from '../types'
 
-export function HistoryScreen() {
-  return (
-    <AdminGate title="History">
-      <HistoryContent />
-    </AdminGate>
-  )
-}
-
-function HistoryContent() {
+export function ReturnsList() {
   const { data, state, error, reload } = useBagReturns()
   const [selected, setSelected] = useState<BagReturn | null>(null)
 
@@ -23,12 +14,14 @@ function HistoryContent() {
 
   return (
     <div className="screen">
-      <header className="list-header">
-        <h1 className="screen-title">History</h1>
+      <div className="subhead">
+        <span className="muted-count">
+          {state === 'ready' ? `${data.length} return${data.length === 1 ? '' : 's'}` : ' '}
+        </span>
         <button type="button" className="btn-link" onClick={reload}>
           ↻ Refresh
         </button>
-      </header>
+      </div>
 
       {state === 'loading' && <p className="state">Loading…</p>}
       {state === 'error' && (
@@ -49,7 +42,9 @@ function HistoryContent() {
               >
                 <span className="return-main">
                   <span className="return-date">{formatDate(r.date_of_visit)}</span>
-                  <span className="return-meta">{r.location}</span>
+                  <span className="return-meta">
+                    {r.location} · No. {r.membership_number}
+                  </span>
                 </span>
                 <span className="return-right">
                   {r.nil_return ? (
@@ -79,13 +74,9 @@ function ReturnDetail({
 }) {
   return (
     <div className="screen">
-      <header className="list-header">
-        <button type="button" className="back-btn" onClick={onBack}>
-          ‹ Back
-        </button>
-        <h1 className="screen-title">Bag Return</h1>
-        <span className="header-spacer" />
-      </header>
+      <button type="button" className="back-btn" onClick={onBack}>
+        ‹ Back to returns
+      </button>
 
       <section className="card">
         <div className="detail-row">
@@ -129,9 +120,7 @@ function ReturnDetail({
         </section>
       )}
 
-      <p className="submitted-at">
-        Submitted {formatDateTime(record.submitted_at)}
-      </p>
+      <p className="submitted-at">Submitted {formatDateTime(record.submitted_at)}</p>
     </div>
   )
 }

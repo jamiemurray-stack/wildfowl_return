@@ -11,14 +11,12 @@ import { SEASON, todayInSeason } from '../lib/season'
 import { Stepper } from '../components/Stepper'
 import { Segmented } from '../components/Segmented'
 import type { LocationName } from '../types'
+import { getRememberedMembership, rememberMembership } from '../lib/membership'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
-const MEMBERSHIP_KEY = 'gdwa_membership_number'
 
 export function SubmitScreen() {
-  const [membership, setMembership] = useState(
-    () => localStorage.getItem(MEMBERSHIP_KEY) ?? '',
-  )
+  const [membership, setMembership] = useState(getRememberedMembership)
   const [dateOfVisit, setDateOfVisit] = useState(todayInSeason)
   const [location, setLocation] = useState<LocationName>('Sands')
   const [counts, setCounts] = useState<SpeciesCounts>(zeroCounts)
@@ -35,12 +33,7 @@ export function SubmitScreen() {
 
   // Remember the membership number on this device for next time.
   useEffect(() => {
-    try {
-      const trimmed = membership.trim()
-      if (trimmed) localStorage.setItem(MEMBERSHIP_KEY, trimmed)
-    } catch {
-      /* ignore unavailable storage */
-    }
+    rememberMembership(membership)
   }, [membership])
 
   const setCount = (key: SpeciesKey, value: number) => {

@@ -1,9 +1,9 @@
-export type TabKey = 'submit' | 'report' | 'history'
+export type TabKey = 'submit' | 'report' | 'admin'
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'submit', label: 'Submit', icon: '📋' },
   { key: 'report', label: 'Report', icon: '⚠️' },
-  { key: 'history', label: 'History', icon: '📊' },
+  { key: 'admin', label: 'Admin', icon: '📊' },
 ]
 
 export function TabBar({
