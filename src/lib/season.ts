@@ -44,6 +44,27 @@ export function previousSeasonName(name: string): string {
   return `${startYear - 1}/${String(startYear % 100).padStart(2, '0')}`
 }
 
+/** The natural season for a date — shooting seasons run autumn → winter, so
+ *  Sep–Dec belong to {year}/{year+1} and Jan–Aug to {year-1}/{year}. */
+export function seasonNameForDate(iso: string): string {
+  const y = parseInt(iso.slice(0, 4), 10)
+  const m = parseInt(iso.slice(5, 7), 10)
+  const startYear = m >= 9 ? y : y - 1
+  return `${startYear}/${String((startYear + 1) % 100).padStart(2, '0')}`
+}
+
+/** Resolve the season a visit date belongs to: an existing season whose date
+ *  window contains the date, otherwise the natural season for that date. */
+export function resolveSeasonName(
+  iso: string,
+  seasons: { name: string; start_date: string; end_date: string }[],
+): string {
+  const matches = seasons
+    .filter((s) => iso >= s.start_date && iso <= s.end_date)
+    .sort((a, b) => (a.start_date < b.start_date ? 1 : -1))
+  return matches[0]?.name ?? seasonNameForDate(iso)
+}
+
 export function defaultSeasonDates(name: string): {
   start_date: string
   end_date: string

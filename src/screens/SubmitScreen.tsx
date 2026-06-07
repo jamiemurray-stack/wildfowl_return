@@ -11,27 +11,23 @@ import {
   CLUB_TITLE,
   seasonSubtitle,
   captionFromDates,
-  todayClamped,
-  clampDate,
+  todayISO,
+  resolveSeasonName,
 } from '../lib/season'
 import { useSettings } from '../lib/useSettings'
 import { useSeasonTotals } from '../lib/useSeasonTotals'
 import { Stepper } from '../components/Stepper'
 import { Segmented } from '../components/Segmented'
-import { SeasonDateNotice } from '../components/SeasonDateNotice'
 import type { LocationName } from '../types'
 import { getRememberedMembership, rememberMembership } from '../lib/membership'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
 export function SubmitScreen() {
-  const { activeSeason: season, activeLimits: limits, loaded } = useSettings()
-  const { totals, reload: reloadTotals } = useSeasonTotals(season.name)
+  const { seasons, seasonFor, limitsFor, loaded } = useSettings()
 
   const [membership, setMembership] = useState(getRememberedMembership)
-  const [dateOfVisit, setDateOfVisit] = useState(() =>
-    todayClamped(season.start_date, season.end_date),
-  )
+  const [dateOfVisit, setDateOfVisit] = useState(todayISO)
   const [location, setLocation] = useState<LocationName>('Sands')
   const [counts, setCounts] = useState<SpeciesCounts>(zeroCounts)
   const [nilReturn, setNilReturn] = useState(false)
@@ -43,14 +39,23 @@ export function SubmitScreen() {
   const [errorMsg, setErrorMsg] = useState('')
   const [showErrors, setShowErrors] = useState(false)
 
-  // Keep the chosen date inside the (possibly admin-changed) season window.
-  useEffect(() => {
-    setDateOfVisit((d) => clampDate(d, season.start_date, season.end_date))
-  }, [season.start_date, season.end_date])
-
   useEffect(() => {
     rememberMembership(membership)
   }, [membership])
+
+  // The season is decided by the visit date, not by which season is "active",
+  // so returns can never be filed against the wrong season.
+  const seasonName = resolveSeasonName(dateOfVisit, seasons)
+  const season = seasonFor(seasonName)
+  const limits = limitsFor(seasonName)
+  const { totals, reload: reloadTotals } = useSeasonTotals(seasonName)
+
+  // Visit dates: from the earliest known season up to today (no future visits).
+  const maxDate = todayISO()
+  const minDate = seasons.reduce(
+    (min, s) => (s.start_date < min ? s.start_date : min),
+    season.start_date,
+  )
 
   const total = sumCounts(counts)
 
@@ -88,15 +93,12 @@ export function SubmitScreen() {
   }
 
   const membershipValid = membership.trim() !== ''
+  const dateValid = dateOfVisit !== ''
   const bagValid = total > 0 || nilReturn
   const birdsBudgetOk =
     nilReturn || birdsRemaining == null || total <= birdsRemaining
   const formValid =
-    !seasonClosed &&
-    membershipValid &&
-    dateOfVisit !== '' &&
-    bagValid &&
-    birdsBudgetOk
+    !seasonClosed && membershipValid && dateValid && bagValid && birdsBudgetOk
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -114,6 +116,7 @@ export function SubmitScreen() {
       ...counts,
       nil_return: nilReturn,
       notes: notes.trim() || null,
+      season: seasonName, // filed by the visit date
     })
 
     if (error) {
@@ -124,7 +127,7 @@ export function SubmitScreen() {
 
     setStatus('saved')
     setShowErrors(false)
-    setDateOfVisit(todayClamped(season.start_date, season.end_date))
+    setDateOfVisit(todayISO())
     setLocation('Sands')
     setCounts(zeroCounts())
     setNilReturn(false)
@@ -135,7 +138,6 @@ export function SubmitScreen() {
 
   return (
     <div className="screen">
-      <SeasonDateNotice />
       <header className="app-header">
         <h1 className="app-title">{CLUB_TITLE}</h1>
         <p className="app-subtitle">{seasonSubtitle(season.name)}</p>
@@ -147,11 +149,11 @@ export function SubmitScreen() {
       {seasonClosed && (
         <div className="banner banner-error" role="alert">
           {visitsReached
-            ? `Season visit limit reached (${season.max_visits}). No further visits can be logged.`
-            : `Season bird limit reached (${season.max_total_birds}). No further visits can be logged.`}
+            ? `The ${season.name} season has reached its visit limit (${season.max_visits}). No more visits can be logged for it.`
+            : `The ${season.name} season has reached its bird limit (${season.max_total_birds}). No more visits can be logged for it.`}
         </div>
       )}
-      {status === 'saved' && !seasonClosed && (
+      {status === 'saved' && (
         <div className="banner banner-success" role="status">
           ✓ Bag return submitted. Thank you!
         </div>
@@ -172,7 +174,6 @@ export function SubmitScreen() {
               type="text"
               placeholder="e.g. 27"
               value={membership}
-              disabled={seasonClosed}
               onChange={(e) => setMembership(e.target.value)}
             />
             {showErrors && !membershipValid && (
@@ -187,11 +188,16 @@ export function SubmitScreen() {
               className="input"
               type="date"
               value={dateOfVisit}
-              min={season.start_date}
-              max={season.end_date}
-              disabled={seasonClosed}
-              onChange={(e) => setDateOfVisit(e.target.value)}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) => {
+                setDateOfVisit(e.target.value)
+                if (status !== 'idle') setStatus('idle')
+              }}
             />
+            <span className="field-hint">
+              Filed under the {season.name} season.
+            </span>
           </label>
         </section>
 
@@ -273,7 +279,7 @@ export function SubmitScreen() {
           {showErrors && bagValid && !birdsBudgetOk && (
             <p className="field-error">
               Only {birdsRemaining} more bird{birdsRemaining === 1 ? '' : 's'} can be
-              logged this season.
+              logged for the {season.name} season.
             </p>
           )}
         </section>
@@ -287,7 +293,6 @@ export function SubmitScreen() {
             rows={3}
             placeholder="Weather, conditions, anything worth noting…"
             value={notes}
-            disabled={seasonClosed}
             onChange={(e) => setNotes(e.target.value)}
           />
         </section>

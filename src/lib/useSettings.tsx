@@ -83,6 +83,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       await supabase.from('seasons').insert({ name, ...dates })
       list.push({ name, ...dates, max_visits: null, max_total_birds: null })
     }
+
+    // Surface any season that has returns but no config row, so it's visible
+    // in the admin even if the row was never created.
+    const { data: dataSeasons } = await supabase
+      .from('species_season_totals')
+      .select('season')
+    for (const r of dataSeasons ?? []) {
+      if (r.season && !list.some((s) => s.name === r.season)) {
+        list.push({
+          name: r.season,
+          ...defaultSeasonDates(r.season),
+          max_visits: null,
+          max_total_birds: null,
+        })
+      }
+    }
+
     list.sort(byNameDesc)
     setSeasons(list)
     setActiveName(name)
