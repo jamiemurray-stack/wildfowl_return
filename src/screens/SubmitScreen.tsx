@@ -18,6 +18,7 @@ import { useSettings } from '../lib/useSettings'
 import { useSeasonTotals } from '../lib/useSeasonTotals'
 import { Stepper } from '../components/Stepper'
 import { Segmented } from '../components/Segmented'
+import { SeasonDateNotice } from '../components/SeasonDateNotice'
 import type { LocationName } from '../types'
 import { getRememberedMembership, rememberMembership } from '../lib/membership'
 
@@ -134,6 +135,7 @@ export function SubmitScreen() {
 
   return (
     <div className="screen">
+      <SeasonDateNotice />
       <header className="app-header">
         <h1 className="app-title">{CLUB_TITLE}</h1>
         <p className="app-subtitle">{seasonSubtitle(season.name)}</p>

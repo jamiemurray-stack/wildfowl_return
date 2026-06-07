@@ -44,7 +44,7 @@ type SettingsValue = {
     value: number | null,
   ) => Promise<string | null>
   setActiveSeason: (name: string) => Promise<string | null>
-  startNextSeason: () => Promise<string | null>
+  addSeason: () => Promise<string | null>
 }
 
 const byNameDesc = (a: SeasonConfig, b: SeasonConfig) =>
@@ -164,29 +164,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const startNextSeason = useCallback(async (): Promise<string | null> => {
-    const nextName = nextSeasonName(activeName)
-    const dates = defaultSeasonDates(nextName)
-    const activeCfg = seasons.find((s) => s.name === activeName) ?? fallbackSeason(activeName)
+  const addSeason = useCallback(async (): Promise<string | null> => {
+    // Add the season after the latest one, carrying its caps + limits over.
+    // Does NOT change the active season — that's a separate, explicit action.
+    const latest =
+      seasons.length > 0
+        ? seasons.reduce((a, b) => (a.name >= b.name ? a : b))
+        : fallbackSeason(activeName)
+    const newName = nextSeasonName(latest.name)
+    const dates = defaultSeasonDates(newName)
 
-    // Create the next season, carrying over the season-level caps.
     const { error: insErr } = await supabase.from('seasons').upsert(
       {
-        name: nextName,
+        name: newName,
         ...dates,
-        max_visits: activeCfg.max_visits,
-        max_total_birds: activeCfg.max_total_birds,
+        max_visits: latest.max_visits,
+        max_total_birds: latest.max_total_birds,
       },
       { onConflict: 'name' },
     )
     if (insErr) return insErr.message
 
-    // Carry over the per-species limits too.
-    const activeLims = limitsBySeason[activeName] ?? emptyLimits()
-    const rows = SPECIES.filter((s) => activeLims[s.key] != null).map((s) => ({
-      season: nextName,
+    const latestLims = limitsBySeason[latest.name] ?? emptyLimits()
+    const rows = SPECIES.filter((s) => latestLims[s.key] != null).map((s) => ({
+      season: newName,
       species: s.key,
-      limit_value: activeLims[s.key],
+      limit_value: latestLims[s.key],
     }))
     if (rows.length) {
       const { error: limErr } = await supabase
@@ -194,12 +197,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         .upsert(rows, { onConflict: 'season,species' })
       if (limErr) return limErr.message
     }
-
-    const { error: updErr } = await supabase
-      .from('app_settings')
-      .update({ current_season: nextName, updated_at: new Date().toISOString() })
-      .eq('id', 1)
-    if (updErr) return updErr.message
 
     await load()
     return null
@@ -218,7 +215,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSeasonConfig,
       setSpeciesLimit,
       setActiveSeason,
-      startNextSeason,
+      addSeason,
     }),
     [
       loaded,
@@ -230,7 +227,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSeasonConfig,
       setSpeciesLimit,
       setActiveSeason,
-      startNextSeason,
+      addSeason,
     ],
   )
 

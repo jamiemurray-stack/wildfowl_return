@@ -38,6 +38,12 @@ export function nextSeasonName(name: string): string {
   return `${startYear + 1}/${String((endYear + 1) % 100).padStart(2, '0')}`
 }
 
+/** "2026/27" → "2025/26" */
+export function previousSeasonName(name: string): string {
+  const { startYear } = parseSeason(name)
+  return `${startYear - 1}/${String(startYear % 100).padStart(2, '0')}`
+}
+
 export function defaultSeasonDates(name: string): {
   start_date: string
   end_date: string
@@ -60,9 +66,29 @@ export function clampDate(iso: string, start: string, end: string): string {
 }
 
 export function todayClamped(start: string, end: string): string {
+  return clampDate(todayISO(), start, end)
+}
+
+export function todayISO(): string {
   const now = new Date()
-  const iso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-  return clampDate(iso, start, end)
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
+/** Shift an ISO date by N months (approximate; used for grace windows). */
+export function addMonths(iso: string, months: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1 + months, d))
+  return dt.toISOString().slice(0, 10)
+}
+
+/** True if today is more than `monthsGrace` months outside [start, end]. */
+export function isDateOutsideSeason(
+  start: string,
+  end: string,
+  monthsGrace = 3,
+): boolean {
+  const today = todayISO()
+  return today < addMonths(start, -monthsGrace) || today > addMonths(end, monthsGrace)
 }
 
 /** Calendar months spanned by a date range, e.g. Sep..Feb, for the chart. */

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useSettings } from '../lib/useSettings'
-import { SPECIES, type SpeciesKey } from '../data/species'
-import { nextSeasonName } from '../lib/season'
+import { SPECIES } from '../data/species'
+import { formatDate, nextSeasonName, previousSeasonName } from '../lib/season'
 import type { SeasonConfig } from '../types'
+import type { SpeciesKey } from '../data/species'
 
 type Saved = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -15,10 +16,13 @@ export function SettingsView({
 }) {
   const {
     activeName,
+    seasons,
+    seasonFor,
+    limitsFor,
     setSeasonConfig,
     setSpeciesLimit,
     setActiveSeason,
-    startNextSeason,
+    addSeason,
   } = useSettings()
 
   const [startDate, setStartDate] = useState(season.start_date)
@@ -32,11 +36,14 @@ export function SettingsView({
   const [limitsStatus, setLimitsStatus] = useState<Saved>('idle')
   const [limitsErr, setLimitsErr] = useState('')
 
-  const [activeStatus, setActiveStatus] = useState<Saved>('idle')
+  const [copyStatus, setCopyStatus] = useState<Saved>('idle')
+  const [copyErr, setCopyErr] = useState('')
+
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null)
   const [activeErr, setActiveErr] = useState('')
 
-  const [confirming, setConfirming] = useState(false)
-  const [seasonChangeErr, setSeasonChangeErr] = useState('')
+  const [addStatus, setAddStatus] = useState<Saved>('idle')
+  const [addErr, setAddErr] = useState('')
 
   useEffect(() => {
     setStartDate(season.start_date)
@@ -51,6 +58,7 @@ export function SettingsView({
     for (const s of SPECIES) next[s.key] = limits[s.key]?.toString() ?? ''
     setLimitInputs(next)
     setLimitsStatus('idle')
+    setCopyStatus('idle')
   }, [limits])
 
   const parseLimit = (v: string): number | null => {
@@ -95,27 +103,56 @@ export function SettingsView({
     setLimitsStatus('saved')
   }
 
-  const makeActive = async () => {
-    setActiveStatus('saving')
-    setActiveErr('')
-    const err = await setActiveSeason(season.name)
+  const prevName = previousSeasonName(season.name)
+  const prevExists = seasons.some((s) => s.name === prevName)
+
+  const copyFromPrev = async () => {
+    setCopyStatus('saving')
+    setCopyErr('')
+    const prevCfg = seasonFor(prevName)
+    const prevLims = limitsFor(prevName)
+    let err = await setSeasonConfig(season.name, {
+      max_visits: prevCfg.max_visits,
+      max_total_birds: prevCfg.max_total_birds,
+    })
+    if (!err) {
+      for (const s of SPECIES) {
+        err = await setSpeciesLimit(season.name, s.key, prevLims[s.key])
+        if (err) break
+      }
+    }
     if (err) {
-      setActiveStatus('error')
-      setActiveErr(err)
+      setCopyStatus('error')
+      setCopyErr(err)
     } else {
-      setActiveStatus('saved')
+      setCopyStatus('saved')
     }
   }
 
-  const doStartNextSeason = async () => {
-    setSeasonChangeErr('')
-    const err = await startNextSeason()
-    if (err) setSeasonChangeErr(err)
-    else setConfirming(false)
+  const makeActive = async (name: string) => {
+    setSwitchingTo(name)
+    setActiveErr('')
+    const err = await setActiveSeason(name)
+    setSwitchingTo(null)
+    if (err) setActiveErr(err)
+  }
+
+  const doAddSeason = async () => {
+    setAddStatus('saving')
+    setAddErr('')
+    const err = await addSeason()
+    if (err) {
+      setAddStatus('error')
+      setAddErr(err)
+    } else {
+      setAddStatus('saved')
+    }
   }
 
   const isActive = season.name === activeName
-  const nextName = nextSeasonName(activeName)
+  const latestName = seasons[0]?.name ?? activeName
+  const addName = nextSeasonName(latestName)
+  const addExists = seasons.some((s) => s.name === addName)
 
   return (
     <div className="screen">
@@ -233,68 +270,76 @@ export function SettingsView({
               ? 'Saved ✓'
               : 'Save species limits'}
         </button>
-      </section>
-
-      <section className="card">
-        <h2 className="card-title">Season management</h2>
-        <p className="settings-note">
-          New returns are recorded against the active season:{' '}
-          <strong>{activeName}</strong>.
-        </p>
-
-        {isActive ? (
-          <p className="settings-note">You’re viewing the active season.</p>
-        ) : (
+        {prevExists && (
           <>
-            <p className="settings-note">
-              You’re viewing <strong>{season.name}</strong>, which isn’t active. Make
-              it active to send new returns here (use this to undo an accidental
-              season change).
-            </p>
-            {activeErr && <p className="field-error">{activeErr}</p>}
+            {copyStatus === 'error' && <p className="field-error">{copyErr}</p>}
             <button
               type="button"
-              className="btn btn-secondary btn-block"
-              onClick={makeActive}
-              disabled={activeStatus === 'saving'}
+              className="btn btn-secondary btn-block btn-stack"
+              onClick={copyFromPrev}
+              disabled={copyStatus === 'saving'}
             >
-              {activeStatus === 'saving'
-                ? 'Switching…'
-                : `Make ${season.name} the active season`}
+              {copyStatus === 'saving'
+                ? 'Copying…'
+                : copyStatus === 'saved'
+                  ? `Copied from ${prevName} ✓`
+                  : `Copy all limits from ${prevName}`}
             </button>
           </>
         )}
+      </section>
+
+      <section className="card">
+        <h2 className="card-title">Seasons</h2>
+        <p className="settings-note">
+          New bag returns are recorded against the <strong>active</strong> season.
+        </p>
+        {activeErr && <p className="field-error">{activeErr}</p>}
+        <ul className="season-table">
+          {seasons.map((s) => (
+            <li className="season-row" key={s.name}>
+              <span className="season-row-main">
+                <span className="season-row-name">{s.name}</span>
+                <span className="season-row-dates">
+                  {formatDate(s.start_date)} – {formatDate(s.end_date)}
+                </span>
+              </span>
+              {s.name === activeName ? (
+                <span className="pill pill-active">Active</span>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={() => makeActive(s.name)}
+                  disabled={switchingTo !== null}
+                >
+                  {switchingTo === s.name ? 'Switching…' : 'Make active'}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
 
         <div className="settings-divider" />
 
         <p className="settings-note">
-          Start the <strong>{nextName}</strong> season. {activeName}’s data is kept
-          (archived); live totals reset to zero and its dates &amp; limits carry over
-          to {nextName} (adjust them afterwards).
+          Add the next season (<strong>{addName}</strong>) as a new row. It copies{' '}
+          {latestName}’s dates &amp; limits and starts empty; use{' '}
+          <strong>Make active</strong> above when you’re ready to switch to it.
         </p>
-        {seasonChangeErr && <p className="field-error">{seasonChangeErr}</p>}
-        {confirming ? (
-          <div className="confirm-row">
-            <button type="button" className="btn btn-danger" onClick={doStartNextSeason}>
-              Confirm: start {nextName}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setConfirming(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="btn btn-secondary btn-block"
-            onClick={() => setConfirming(true)}
-          >
-            Start {nextName} season →
-          </button>
-        )}
+        {addErr && <p className="field-error">{addErr}</p>}
+        <button
+          type="button"
+          className="btn btn-secondary btn-block"
+          onClick={doAddSeason}
+          disabled={addStatus === 'saving' || addExists}
+        >
+          {addStatus === 'saving'
+            ? 'Adding…'
+            : addExists
+              ? `${addName} already added`
+              : `+ Add ${addName} season`}
+        </button>
       </section>
     </div>
   )

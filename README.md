@@ -14,7 +14,7 @@ A bottom tab bar with three tabs:
 | --- | --- | --- |
 | **Submit** | 📋 | Members log a visit: membership number, date (within the season window), location, a stepper per species, a "Nil return" toggle, live total, and notes. Enforces limits — a species blanks out at its cap, and if the season visit or total-bird limit is reached the form closes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
-| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** (view any past season) and four sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Issues** (shows an **unseen-report badge** that clears when the tab is opened; CSV), and **Settings** (season dates, the three limit types, **start next season** with limit carry-over, and **make a past season active** to undo an accidental change). |
+| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** (view any past season) and four sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Issues** (shows an **unseen-report badge** that clears when the tab is opened; CSV), and **Settings** (edit season dates &amp; the three limit types, a **seasons table** to make any season active or **add the next season** as a row, and **copy all limits from the previous season**). |
 
 **Submit** and **Report** are open to all members. The **Admin** panel aggregates
 every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock
@@ -65,10 +65,13 @@ A `species_season_totals` view aggregates per-season totals (visits, total birds
 and each species) and powers the limit checks shown on the Submit form and the
 Admin overview.
 
-The Admin panel keeps a season selector so any past season can be viewed.
-**Start next season** carries the dates and limits over to the new season; you
-can **revert** an accidental change by selecting a previous season and making it
-active again.
+The Admin panel keeps a season selector so any past season can be viewed, and a
+**seasons table** in Settings lists every season, marks the active one, and lets
+you make any season active with one tap (handy to undo an accidental change).
+**Add season** appends the next season as a new row, copying the latest season's
+dates & limits; you can also **copy all limits from the previous season** onto the
+season you're editing. A warning banner appears on the Submit and Admin screens
+when today's date is more than ~3 months outside the active season.
 
 ## Security model
 

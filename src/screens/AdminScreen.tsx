@@ -5,6 +5,7 @@ import { AdminOverview } from '../components/AdminOverview'
 import { ReturnsList } from '../components/ReturnsList'
 import { IssuesList } from '../components/IssuesList'
 import { SettingsView } from '../components/SettingsView'
+import { SeasonDateNotice } from '../components/SeasonDateNotice'
 import { useSettings } from '../lib/useSettings'
 import { useIssueReports } from '../lib/useIssueReports'
 import { getIssuesLastSeen, setIssuesLastSeen } from '../lib/issuesSeen'
@@ -50,6 +51,7 @@ function AdminPanel() {
 
   return (
     <div className="screen">
+      <SeasonDateNotice />
       {seasons.length > 1 && (
         <div className="season-picker">
           <label className="season-picker-label" htmlFor="season-select">
