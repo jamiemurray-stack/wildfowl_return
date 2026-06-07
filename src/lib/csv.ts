@@ -16,6 +16,11 @@ export function toCsv(headers: string[], rows: Cell[][]): string {
     .join('\r\n')
 }
 
+/** Build CSV from raw rows (no separate header) — for multi-section reports. */
+export function rowsToCsv(rows: Cell[][]): string {
+  return rows.map((row) => row.map(escapeCell).join(',')).join('\r\n')
+}
+
 export function downloadCsv(filename: string, csv: string): void {
   const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)

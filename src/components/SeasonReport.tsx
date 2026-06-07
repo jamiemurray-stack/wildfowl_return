@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
 import { SPECIES } from '../data/species'
 import { SEASON } from '../lib/season'
+import { rowsToCsv, downloadCsv } from '../lib/csv'
 import type { LocationName } from '../types'
 
 const LOCATIONS: LocationName[] = ['Sands', 'Marshes']
@@ -68,6 +69,33 @@ export function SeasonReport() {
     }
   }, [data])
 
+  const exportCsv = () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const rows: (string | number | null)[][] = [
+      ['Grange & District Wildfowlers — Season Report'],
+      [SEASON.caption],
+      ['Generated', today],
+      [],
+      ['Total returns', stats.totalReturns],
+      ['Total birds', stats.totalBirds],
+      ['Nil returns', stats.nilReturns],
+      [],
+      ['Species', 'Total'],
+      ...stats.species.map((s) => [s.label, s.total]),
+      [],
+      ['Location', 'Returns', 'Birds'],
+      ...LOCATIONS.map((loc) => [
+        loc,
+        stats.byLocation[loc].returns,
+        stats.byLocation[loc].birds,
+      ]),
+      [],
+      ['Month', 'Birds'],
+      ...stats.months.map((m) => [m.label, m.birds]),
+    ]
+    downloadCsv('season-report-2025-26.csv', rowsToCsv(rows))
+  }
+
   if (state === 'loading') return <p className="state">Loading…</p>
   if (state === 'error')
     return <p className="state state-error">Couldn’t load returns: {error}</p>
@@ -76,9 +104,19 @@ export function SeasonReport() {
     <div className="screen">
       <div className="subhead">
         <p className="app-caption">{SEASON.caption}</p>
-        <button type="button" className="btn-link" onClick={reload}>
-          ↻ Refresh
-        </button>
+        <div className="subhead-actions">
+          <button
+            type="button"
+            className="btn-link"
+            onClick={exportCsv}
+            disabled={stats.totalReturns === 0}
+          >
+            ⬇ Export CSV
+          </button>
+          <button type="button" className="btn-link" onClick={reload}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       <div className="stat-grid">

@@ -90,6 +90,23 @@ Deployed to Vercel as a static Vite build (build command `vite build`, output
 Supabase credentials are bundled; set `VITE_SUPABASE_URL` /
 `VITE_SUPABASE_ANON_KEY` in Vercel only if you fork to a different backend.
 
+## QR code
+
+Generate a QR code that points members at the live site (run it offline — no
+third-party QR service is used):
+
+```bash
+npm run qr -- https://your-site.vercel.app
+```
+
+This writes to `qr/`:
+
+- `qr.svg` — vector QR, scales to any size
+- `qr.png` — 1024px raster for slides / messaging
+- `poster.svg` — a printable A4 "Scan to log your bag return" poster
+
+Re-run it whenever the URL changes.
+
 ## Project layout
 
 ```
