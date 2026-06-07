@@ -6,7 +6,9 @@ import { seasonShort } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
 import type { SeasonConfig } from '../types'
 
-type SortKey = SpeciesKey | 'total' | 'visits'
+type SortKey = SpeciesKey | 'total' | 'visits' | 'pervisit'
+
+const perVisit = (total: number, visits: number) => (visits ? total / visits : 0)
 
 type Row = {
   member: string
@@ -51,7 +53,9 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
         ? row.total
         : sortKey === 'visits'
           ? row.visits
-          : row.counts[sortKey]
+          : sortKey === 'pervisit'
+            ? perVisit(row.total, row.visits)
+            : row.counts[sortKey]
     return [...rows].sort((a, b) => {
       const d = val(a) - val(b)
       return asc ? d : -d
@@ -93,6 +97,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
       ...SPECIES.map((s) => s.label),
       'Total',
       'Visits',
+      'Birds/visit',
     ]
     const csvRows: (string | number)[][] = sorted.map((r, i) => [
       i + 1,
@@ -101,6 +106,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
       ...SPECIES.map((s) => r.counts[s.key]),
       r.total,
       r.visits,
+      perVisit(r.total, r.visits).toFixed(1),
     ])
     csvRows.push([
       '',
@@ -109,6 +115,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
       ...SPECIES.map((s) => grand.counts[s.key]),
       grand.total,
       grand.visits,
+      perVisit(grand.total, grand.visits).toFixed(1),
     ])
     downloadCsv(
       `leaderboard-${seasonShort(season.name).replace('/', '-')}.csv`,
@@ -171,6 +178,12 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
                   <th className="lb-num lb-sort" onClick={() => setSort('visits')}>
                     Visits{arrow('visits')}
                   </th>
+                  <th
+                    className="lb-num lb-sort"
+                    onClick={() => setSort('pervisit')}
+                  >
+                    Birds/visit{arrow('pervisit')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -187,6 +200,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
                     ))}
                     <td className="lb-num lb-total-col">{r.total}</td>
                     <td className="lb-num">{r.visits}</td>
+                    <td className="lb-num">{perVisit(r.total, r.visits).toFixed(1)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -200,6 +214,9 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
                   ))}
                   <td className="lb-num lb-total-col">{grand.total}</td>
                   <td className="lb-num">{grand.visits}</td>
+                  <td className="lb-num">
+                    {perVisit(grand.total, grand.visits).toFixed(1)}
+                  </td>
                 </tr>
               </tfoot>
             </table>

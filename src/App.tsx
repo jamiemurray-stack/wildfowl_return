@@ -11,7 +11,7 @@ export default function App() {
   return (
     <SettingsProvider>
       <div className="app-shell">
-        <main className="app-main">
+        <main className={`app-main${tab === 'admin' ? ' app-main--wide' : ''}`}>
           {/* Remount per tab so the admin screen re-checks the gate and refetches. */}
           {tab === 'submit' && <SubmitScreen key="submit" />}
           {tab === 'report' && <ReportIssueScreen key="report" />}

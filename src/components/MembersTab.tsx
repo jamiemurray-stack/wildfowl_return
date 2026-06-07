@@ -55,7 +55,7 @@ export function MembersTab() {
   }
 
   return (
-    <div className="screen">
+    <div className="screen admin-cols">
       <section className="card">
         <h2 className="card-title">Add / update member</h2>
         <p className="settings-note">

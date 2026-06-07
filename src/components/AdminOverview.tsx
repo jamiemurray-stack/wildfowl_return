@@ -217,6 +217,7 @@ export function AdminOverview({
 
       {state === 'ready' && data.length > 0 && (
         <>
+          <div className="admin-cols">
           <section className="card">
             <h2 className="card-title">Birds by species</h2>
             <ul className="bars">
@@ -291,6 +292,7 @@ export function AdminOverview({
               ))}
             </div>
           </section>
+          </div>
         </>
       )}
     </div>

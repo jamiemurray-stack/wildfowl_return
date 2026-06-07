@@ -88,6 +88,7 @@ function AdminPanel() {
         onChange={setView}
         ariaLabel="Admin section"
         badges={{ Issues: unseen }}
+        grid
       />
 
       {view === 'Overview' && <AdminOverview season={season} limits={limits} />}

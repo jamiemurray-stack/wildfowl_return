@@ -4,15 +4,21 @@ export function Segmented<T extends string>({
   onChange,
   ariaLabel,
   badges,
+  grid = false,
 }: {
   options: readonly T[]
   value: T
   onChange: (value: T) => void
   ariaLabel?: string
   badges?: Partial<Record<T, number>>
+  grid?: boolean
 }) {
   return (
-    <div className="segmented" role="radiogroup" aria-label={ariaLabel}>
+    <div
+      className={`segmented${grid ? ' segmented--grid' : ''}`}
+      role="radiogroup"
+      aria-label={ariaLabel}
+    >
       {options.map((opt) => {
         const badge = badges?.[opt]
         return (

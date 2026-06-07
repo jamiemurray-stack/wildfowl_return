@@ -155,7 +155,7 @@ export function SettingsView({
   const addExists = seasons.some((s) => s.name === addName)
 
   return (
-    <div className="screen">
+    <div className="screen admin-cols">
       <section className="card">
         <h2 className="card-title">
           Season — {season.name}

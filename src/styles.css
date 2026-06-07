@@ -78,6 +78,28 @@ button:focus-visible,
   gap: 18px;
 }
 
+/* Wider admin layout on larger screens (forms stay narrow). */
+@media (min-width: 768px) {
+  .app-main--wide {
+    max-width: 980px;
+  }
+}
+
+.admin-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media (min-width: 768px) {
+  .admin-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+}
+
 /* ---- Header ---- */
 .app-header {
   text-align: center;
@@ -248,6 +270,18 @@ button:focus-visible,
   color: var(--brand-dark);
   cursor: pointer;
   white-space: nowrap;
+}
+
+/* Grid mode: every option visible at once (wraps to rows), no scrolling. */
+.segmented--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  overflow: visible;
+}
+
+.segmented--grid .segment {
+  font-size: 12px;
+  padding: 10px 8px;
 }
 
 .segment.is-active {
