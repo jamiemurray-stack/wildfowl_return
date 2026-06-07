@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -16,9 +17,9 @@ type Limits = Record<SpeciesKey, number | null>
 const emptyLimits = (): Limits =>
   Object.fromEntries(SPECIES.map((s) => [s.key, null])) as Limits
 
-const fallbackSeason = (): SeasonConfig => ({
-  name: DEFAULT_SEASON,
-  ...defaultSeasonDates(DEFAULT_SEASON),
+const fallbackSeason = (name: string): SeasonConfig => ({
+  name,
+  ...defaultSeasonDates(name),
   max_visits: null,
   max_total_birds: null,
 })
@@ -29,20 +30,35 @@ type SeasonPatch = Partial<
 
 type SettingsValue = {
   loaded: boolean
-  season: SeasonConfig
-  limits: Limits
+  activeName: string
+  seasons: SeasonConfig[]
+  activeSeason: SeasonConfig
+  activeLimits: Limits
+  seasonFor: (name: string) => SeasonConfig
+  limitsFor: (name: string) => Limits
   reload: () => Promise<void>
-  setSpeciesLimit: (species: SpeciesKey, value: number | null) => Promise<string | null>
-  setSeasonConfig: (patch: SeasonPatch) => Promise<string | null>
+  setSeasonConfig: (name: string, patch: SeasonPatch) => Promise<string | null>
+  setSpeciesLimit: (
+    name: string,
+    species: SpeciesKey,
+    value: number | null,
+  ) => Promise<string | null>
+  setActiveSeason: (name: string) => Promise<string | null>
   startNextSeason: () => Promise<string | null>
 }
+
+const byNameDesc = (a: SeasonConfig, b: SeasonConfig) =>
+  a.name < b.name ? 1 : a.name > b.name ? -1 : 0
 
 const SettingsContext = createContext<SettingsValue | null>(null)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false)
-  const [season, setSeason] = useState<SeasonConfig>(fallbackSeason)
-  const [limits, setLimits] = useState<Limits>(emptyLimits)
+  const [activeName, setActiveName] = useState(DEFAULT_SEASON)
+  const [seasons, setSeasons] = useState<SeasonConfig[]>([
+    fallbackSeason(DEFAULT_SEASON),
+  ])
+  const [limitsBySeason, setLimitsBySeason] = useState<Record<string, Limits>>({})
 
   const load = useCallback(async () => {
     const { data: settings } = await supabase
@@ -52,35 +68,37 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       .maybeSingle()
     const name = settings?.current_season ?? DEFAULT_SEASON
 
-    const { data: srow } = await supabase
-      .from('seasons')
-      .select('*')
-      .eq('name', name)
-      .maybeSingle()
+    const { data: seasonRows } = await supabase.from('seasons').select('*')
+    let list: SeasonConfig[] = (seasonRows ?? []).map((r) => ({
+      name: r.name,
+      start_date: r.start_date,
+      end_date: r.end_date,
+      max_visits: r.max_visits,
+      max_total_birds: r.max_total_birds,
+    }))
 
-    if (srow) {
-      setSeason({
-        name: srow.name,
-        start_date: srow.start_date,
-        end_date: srow.end_date,
-        max_visits: srow.max_visits,
-        max_total_birds: srow.max_total_birds,
-      })
-    } else {
+    // Make sure the active season always exists as a row.
+    if (!list.some((s) => s.name === name)) {
       const dates = defaultSeasonDates(name)
-      setSeason({ name, ...dates, max_visits: null, max_total_birds: null })
       await supabase.from('seasons').insert({ name, ...dates })
+      list.push({ name, ...dates, max_visits: null, max_total_birds: null })
     }
+    list.sort(byNameDesc)
+    setSeasons(list)
+    setActiveName(name)
 
-    const { data: lrows } = await supabase
+    const { data: limitRows } = await supabase
       .from('species_limits')
-      .select('species, limit_value')
-      .eq('season', name)
-    const next = emptyLimits()
-    for (const r of lrows ?? []) {
-      if (r.species in next) next[r.species as SpeciesKey] = r.limit_value
+      .select('season, species, limit_value')
+    const map: Record<string, Limits> = {}
+    for (const s of list) map[s.name] = emptyLimits()
+    for (const r of limitRows ?? []) {
+      if (!map[r.season]) map[r.season] = emptyLimits()
+      if (r.species in map[r.season]) {
+        map[r.season][r.species as SpeciesKey] = r.limit_value
+      }
     }
-    setLimits(next)
+    setLimitsBySeason(map)
     setLoaded(true)
   }, [])
 
@@ -88,11 +106,35 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     load()
   }, [load])
 
+  const seasonFor = useCallback(
+    (name: string): SeasonConfig =>
+      seasons.find((s) => s.name === name) ?? fallbackSeason(name),
+    [seasons],
+  )
+  const limitsFor = useCallback(
+    (name: string): Limits => limitsBySeason[name] ?? emptyLimits(),
+    [limitsBySeason],
+  )
+
+  const setSeasonConfig = useCallback(
+    async (name: string, patch: SeasonPatch): Promise<string | null> => {
+      const { error } = await supabase.from('seasons').update(patch).eq('name', name)
+      if (error) return error.message
+      setSeasons((prev) => prev.map((s) => (s.name === name ? { ...s, ...patch } : s)))
+      return null
+    },
+    [],
+  )
+
   const setSpeciesLimit = useCallback(
-    async (species: SpeciesKey, value: number | null): Promise<string | null> => {
+    async (
+      name: string,
+      species: SpeciesKey,
+      value: number | null,
+    ): Promise<string | null> => {
       const { error } = await supabase.from('species_limits').upsert(
         {
-          season: season.name,
+          season: name,
           species,
           limit_value: value,
           updated_at: new Date().toISOString(),
@@ -100,55 +142,100 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         { onConflict: 'season,species' },
       )
       if (error) return error.message
-      setLimits((prev) => ({ ...prev, [species]: value }))
+      setLimitsBySeason((prev) => ({
+        ...prev,
+        [name]: { ...(prev[name] ?? emptyLimits()), [species]: value },
+      }))
       return null
     },
-    [season.name],
+    [],
   )
 
-  const setSeasonConfig = useCallback(
-    async (patch: SeasonPatch): Promise<string | null> => {
+  const setActiveSeason = useCallback(
+    async (name: string): Promise<string | null> => {
       const { error } = await supabase
-        .from('seasons')
-        .update(patch)
-        .eq('name', season.name)
+        .from('app_settings')
+        .update({ current_season: name, updated_at: new Date().toISOString() })
+        .eq('id', 1)
       if (error) return error.message
-      setSeason((prev) => ({ ...prev, ...patch }))
+      setActiveName(name)
       return null
     },
-    [season.name],
+    [],
   )
 
   const startNextSeason = useCallback(async (): Promise<string | null> => {
-    const nextName = nextSeasonName(season.name)
+    const nextName = nextSeasonName(activeName)
     const dates = defaultSeasonDates(nextName)
-    const { error: insErr } = await supabase
-      .from('seasons')
-      .upsert({ name: nextName, ...dates }, { onConflict: 'name' })
+    const activeCfg = seasons.find((s) => s.name === activeName) ?? fallbackSeason(activeName)
+
+    // Create the next season, carrying over the season-level caps.
+    const { error: insErr } = await supabase.from('seasons').upsert(
+      {
+        name: nextName,
+        ...dates,
+        max_visits: activeCfg.max_visits,
+        max_total_birds: activeCfg.max_total_birds,
+      },
+      { onConflict: 'name' },
+    )
     if (insErr) return insErr.message
+
+    // Carry over the per-species limits too.
+    const activeLims = limitsBySeason[activeName] ?? emptyLimits()
+    const rows = SPECIES.filter((s) => activeLims[s.key] != null).map((s) => ({
+      season: nextName,
+      species: s.key,
+      limit_value: activeLims[s.key],
+    }))
+    if (rows.length) {
+      const { error: limErr } = await supabase
+        .from('species_limits')
+        .upsert(rows, { onConflict: 'season,species' })
+      if (limErr) return limErr.message
+    }
+
     const { error: updErr } = await supabase
       .from('app_settings')
       .update({ current_season: nextName, updated_at: new Date().toISOString() })
       .eq('id', 1)
     if (updErr) return updErr.message
+
     await load()
     return null
-  }, [season.name, load])
+  }, [activeName, seasons, limitsBySeason, load])
+
+  const value = useMemo<SettingsValue>(
+    () => ({
+      loaded,
+      activeName,
+      seasons,
+      activeSeason: seasonFor(activeName),
+      activeLimits: limitsFor(activeName),
+      seasonFor,
+      limitsFor,
+      reload: load,
+      setSeasonConfig,
+      setSpeciesLimit,
+      setActiveSeason,
+      startNextSeason,
+    }),
+    [
+      loaded,
+      activeName,
+      seasons,
+      seasonFor,
+      limitsFor,
+      load,
+      setSeasonConfig,
+      setSpeciesLimit,
+      setActiveSeason,
+      startNextSeason,
+    ],
+  )
 
   return (
-    <SettingsContext.Provider
-      value={{
-        loaded,
-        season,
-        limits,
-        reload: load,
-        setSpeciesLimit,
-        setSeasonConfig,
-        startNextSeason,
-      }}
-    >
-      {children}
-    </SettingsContext.Provider>
+    <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
   )
 }
 

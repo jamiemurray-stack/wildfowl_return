@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
-import { useSettings } from '../lib/useSettings'
 import { SPECIES } from '../data/species'
 import { formatDate, formatDateTime, seasonShort } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
 import { EditReturn } from './EditReturn'
-import type { BagReturn } from '../types'
+import type { BagReturn, SeasonConfig } from '../types'
 
-export function ReturnsList() {
-  const { season } = useSettings()
+export function ReturnsList({ season }: { season: SeasonConfig }) {
   const { data, state, error, reload } = useBagReturns(season.name)
   const [selected, setSelected] = useState<BagReturn | null>(null)
   const [editing, setEditing] = useState(false)

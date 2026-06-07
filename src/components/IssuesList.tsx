@@ -1,10 +1,19 @@
-import { useIssueReports } from '../lib/useIssueReports'
 import { formatDateTime } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
+import type { IssueReport } from '../types'
+import type { LoadState } from '../lib/useBagReturns'
 
-export function IssuesList() {
-  const { data, state, error, reload } = useIssueReports()
-
+export function IssuesList({
+  data,
+  state,
+  error,
+  reload,
+}: {
+  data: IssueReport[]
+  state: LoadState
+  error: string
+  reload: () => void
+}) {
   const exportCsv = () => {
     const headers = [
       'Submitted At',

@@ -1,11 +1,10 @@
 import { useMemo } from 'react'
-import { useSettings } from '../lib/useSettings'
 import { useSeasonTotals } from '../lib/useSeasonTotals'
 import { useBagReturns } from '../lib/useBagReturns'
-import { SPECIES } from '../data/species'
+import { SPECIES, type SpeciesKey } from '../data/species'
 import { captionFromDates, monthsBetween } from '../lib/season'
 import { rowsToCsv, downloadCsv } from '../lib/csv'
-import type { LocationName } from '../types'
+import type { LocationName, SeasonConfig } from '../types'
 
 const LOCATIONS: LocationName[] = ['Sands', 'Marshes']
 
@@ -23,8 +22,13 @@ function pct(value: number, limit: number | null): number {
   return Math.min(100, Math.round((value / limit) * 100))
 }
 
-export function AdminOverview() {
-  const { season, limits } = useSettings()
+export function AdminOverview({
+  season,
+  limits,
+}: {
+  season: SeasonConfig
+  limits: Record<SpeciesKey, number | null>
+}) {
   const { totals, reload: reloadTotals } = useSeasonTotals(season.name)
   const { data, state, error, reload: reloadData } = useBagReturns(season.name)
 

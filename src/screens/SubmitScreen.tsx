@@ -24,7 +24,7 @@ import { getRememberedMembership, rememberMembership } from '../lib/membership'
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
 export function SubmitScreen() {
-  const { season, limits, loaded } = useSettings()
+  const { activeSeason: season, activeLimits: limits, loaded } = useSettings()
   const { totals, reload: reloadTotals } = useSeasonTotals(season.name)
 
   const [membership, setMembership] = useState(getRememberedMembership)

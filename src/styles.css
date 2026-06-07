@@ -1076,3 +1076,61 @@ button:focus-visible,
 .btn-danger-outline:active {
   background: #fbeeec;
 }
+
+/* ---- Season picker (admin) ---- */
+.season-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.season-picker-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.season-select {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* ---- Segmented badge (unseen issues) ---- */
+.seg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* ---- Active-season tag + settings divider ---- */
+.tag-active {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand-dark);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 16px 0;
+}

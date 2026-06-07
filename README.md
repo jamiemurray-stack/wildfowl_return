@@ -14,7 +14,7 @@ A bottom tab bar with three tabs:
 | --- | --- | --- |
 | **Submit** | 📋 | Members log a visit: membership number, date (within the season window), location, a stepper per species, a "Nil return" toggle, live total, and notes. Enforces limits — a species blanks out at its cap, and if the season visit or total-bird limit is reached the form closes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
-| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with four sub-views: **Overview** (limit monitoring — alerts + progress bars for visits, total birds and each species, plus season charts and CSV export), **Returns** (tap a record to view / **edit** / delete; CSV export), **Issues** (CSV export), and **Settings** (season dates, the three limit types, and "start next season"). |
+| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** (view any past season) and four sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Issues** (shows an **unseen-report badge** that clears when the tab is opened; CSV), and **Settings** (season dates, the three limit types, **start next season** with limit carry-over, and **make a past season active** to undo an accidental change). |
 
 **Submit** and **Report** are open to all members. The **Admin** panel aggregates
 every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock
@@ -64,6 +64,11 @@ always computed by the database and can't drift from the species counts.
 A `species_season_totals` view aggregates per-season totals (visits, total birds
 and each species) and powers the limit checks shown on the Submit form and the
 Admin overview.
+
+The Admin panel keeps a season selector so any past season can be viewed.
+**Start next season** carries the dates and limits over to the new season; you
+can **revert** an accidental change by selecting a previous season and making it
+active again.
 
 ## Security model
 

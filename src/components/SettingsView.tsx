@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useSettings } from '../lib/useSettings'
-import { SPECIES } from '../data/species'
+import { SPECIES, type SpeciesKey } from '../data/species'
 import { nextSeasonName } from '../lib/season'
+import type { SeasonConfig } from '../types'
 
 type Saved = 'idle' | 'saving' | 'saved' | 'error'
 
-export function SettingsView() {
-  const { season, limits, setSeasonConfig, setSpeciesLimit, startNextSeason } =
-    useSettings()
+export function SettingsView({
+  season,
+  limits,
+}: {
+  season: SeasonConfig
+  limits: Record<SpeciesKey, number | null>
+}) {
+  const {
+    activeName,
+    setSeasonConfig,
+    setSpeciesLimit,
+    setActiveSeason,
+    startNextSeason,
+  } = useSettings()
 
   const [startDate, setStartDate] = useState(season.start_date)
   const [endDate, setEndDate] = useState(season.end_date)
@@ -20,6 +32,9 @@ export function SettingsView() {
   const [limitsStatus, setLimitsStatus] = useState<Saved>('idle')
   const [limitsErr, setLimitsErr] = useState('')
 
+  const [activeStatus, setActiveStatus] = useState<Saved>('idle')
+  const [activeErr, setActiveErr] = useState('')
+
   const [confirming, setConfirming] = useState(false)
   const [seasonChangeErr, setSeasonChangeErr] = useState('')
 
@@ -28,12 +43,14 @@ export function SettingsView() {
     setEndDate(season.end_date)
     setMaxVisits(season.max_visits?.toString() ?? '')
     setMaxBirds(season.max_total_birds?.toString() ?? '')
+    setSeasonStatus('idle')
   }, [season])
 
   useEffect(() => {
     const next: Record<string, string> = {}
     for (const s of SPECIES) next[s.key] = limits[s.key]?.toString() ?? ''
     setLimitInputs(next)
+    setLimitsStatus('idle')
   }, [limits])
 
   const parseLimit = (v: string): number | null => {
@@ -46,7 +63,7 @@ export function SettingsView() {
   const saveSeason = async () => {
     setSeasonStatus('saving')
     setSeasonErr('')
-    const err = await setSeasonConfig({
+    const err = await setSeasonConfig(season.name, {
       start_date: startDate,
       end_date: endDate,
       max_visits: parseLimit(maxVisits),
@@ -64,7 +81,11 @@ export function SettingsView() {
     setLimitsStatus('saving')
     setLimitsErr('')
     for (const s of SPECIES) {
-      const err = await setSpeciesLimit(s.key, parseLimit(limitInputs[s.key] ?? ''))
+      const err = await setSpeciesLimit(
+        season.name,
+        s.key,
+        parseLimit(limitInputs[s.key] ?? ''),
+      )
       if (err) {
         setLimitsStatus('error')
         setLimitsErr(err)
@@ -74,6 +95,18 @@ export function SettingsView() {
     setLimitsStatus('saved')
   }
 
+  const makeActive = async () => {
+    setActiveStatus('saving')
+    setActiveErr('')
+    const err = await setActiveSeason(season.name)
+    if (err) {
+      setActiveStatus('error')
+      setActiveErr(err)
+    } else {
+      setActiveStatus('saved')
+    }
+  }
+
   const doStartNextSeason = async () => {
     setSeasonChangeErr('')
     const err = await startNextSeason()
@@ -81,12 +114,16 @@ export function SettingsView() {
     else setConfirming(false)
   }
 
-  const next = nextSeasonName(season.name)
+  const isActive = season.name === activeName
+  const nextName = nextSeasonName(activeName)
 
   return (
     <div className="screen">
       <section className="card">
-        <h2 className="card-title">Season — {season.name}</h2>
+        <h2 className="card-title">
+          Season — {season.name}
+          {isActive && <span className="tag-active">active</span>}
+        </h2>
         <label className="field">
           <span className="field-label">Start date</span>
           <input
@@ -199,17 +236,47 @@ export function SettingsView() {
       </section>
 
       <section className="card">
-        <h2 className="card-title">New season</h2>
+        <h2 className="card-title">Season management</h2>
         <p className="settings-note">
-          Start the <strong>{next}</strong> season. This season’s returns are kept
-          (archived), but live totals, reports and limits reset to zero for {next}.
-          You can adjust the new dates and limits afterwards.
+          New returns are recorded against the active season:{' '}
+          <strong>{activeName}</strong>.
+        </p>
+
+        {isActive ? (
+          <p className="settings-note">You’re viewing the active season.</p>
+        ) : (
+          <>
+            <p className="settings-note">
+              You’re viewing <strong>{season.name}</strong>, which isn’t active. Make
+              it active to send new returns here (use this to undo an accidental
+              season change).
+            </p>
+            {activeErr && <p className="field-error">{activeErr}</p>}
+            <button
+              type="button"
+              className="btn btn-secondary btn-block"
+              onClick={makeActive}
+              disabled={activeStatus === 'saving'}
+            >
+              {activeStatus === 'saving'
+                ? 'Switching…'
+                : `Make ${season.name} the active season`}
+            </button>
+          </>
+        )}
+
+        <div className="settings-divider" />
+
+        <p className="settings-note">
+          Start the <strong>{nextName}</strong> season. {activeName}’s data is kept
+          (archived); live totals reset to zero and its dates &amp; limits carry over
+          to {nextName} (adjust them afterwards).
         </p>
         {seasonChangeErr && <p className="field-error">{seasonChangeErr}</p>}
         {confirming ? (
           <div className="confirm-row">
             <button type="button" className="btn btn-danger" onClick={doStartNextSeason}>
-              Confirm: start {next}
+              Confirm: start {nextName}
             </button>
             <button
               type="button"
@@ -225,7 +292,7 @@ export function SettingsView() {
             className="btn btn-secondary btn-block"
             onClick={() => setConfirming(true)}
           >
-            Start {next} season →
+            Start {nextName} season →
           </button>
         )}
       </section>
