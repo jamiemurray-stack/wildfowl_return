@@ -3,14 +3,23 @@ import { AdminGate } from '../components/AdminGate'
 import { Segmented } from '../components/Segmented'
 import { AdminOverview } from '../components/AdminOverview'
 import { ReturnsList } from '../components/ReturnsList'
+import { Leaderboard } from '../components/Leaderboard'
 import { IssuesList } from '../components/IssuesList'
+import { MembersTab } from '../components/MembersTab'
 import { SettingsView } from '../components/SettingsView'
 import { SeasonDateNotice } from '../components/SeasonDateNotice'
 import { useSettings } from '../lib/useSettings'
 import { useIssueReports } from '../lib/useIssueReports'
 import { getIssuesLastSeen, setIssuesLastSeen } from '../lib/issuesSeen'
 
-const SUBVIEWS = ['Overview', 'Returns', 'Issues', 'Settings'] as const
+const SUBVIEWS = [
+  'Overview',
+  'Returns',
+  'Leaderboard',
+  'Issues',
+  'Members',
+  'Settings',
+] as const
 type SubView = (typeof SUBVIEWS)[number]
 
 export function AdminScreen() {
@@ -83,6 +92,7 @@ function AdminPanel() {
 
       {view === 'Overview' && <AdminOverview season={season} limits={limits} />}
       {view === 'Returns' && <ReturnsList season={season} />}
+      {view === 'Leaderboard' && <Leaderboard season={season} />}
       {view === 'Issues' && (
         <IssuesList
           data={issues.data}
@@ -91,6 +101,7 @@ function AdminPanel() {
           reload={issues.reload}
         />
       )}
+      {view === 'Members' && <MembersTab />}
       {view === 'Settings' && <SettingsView season={season} limits={limits} />}
     </div>
   )

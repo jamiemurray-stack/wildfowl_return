@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
+import { useSettings } from '../lib/useSettings'
 import { SPECIES } from '../data/species'
 import { formatDate, formatDateTime, seasonShort } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
@@ -8,6 +9,7 @@ import type { BagReturn, SeasonConfig } from '../types'
 
 export function ReturnsList({ season }: { season: SeasonConfig }) {
   const { data, state, error, reload } = useBagReturns(season.name)
+  const { memberLabel } = useSettings()
   const [selected, setSelected] = useState<BagReturn | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -105,7 +107,7 @@ export function ReturnsList({ season }: { season: SeasonConfig }) {
                 <span className="return-main">
                   <span className="return-date">{formatDate(r.date_of_visit)}</span>
                   <span className="return-meta">
-                    {r.location} · No. {r.membership_number}
+                    {r.location} · {memberLabel(r.membership_number)}
                   </span>
                 </span>
                 <span className="return-right">
@@ -136,6 +138,7 @@ function ReturnDetail({
   onBack: () => void
   onEdit: () => void
 }) {
+  const { memberLabel } = useSettings()
   return (
     <div className="screen">
       <div className="list-header">
@@ -150,7 +153,7 @@ function ReturnDetail({
       <section className="card">
         <div className="detail-row">
           <span className="detail-key">Membership No.</span>
-          <span className="detail-val">{record.membership_number}</span>
+          <span className="detail-val">{memberLabel(record.membership_number)}</span>
         </div>
         <div className="detail-row">
           <span className="detail-key">Date of Visit</span>

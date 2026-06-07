@@ -24,7 +24,7 @@ import { getRememberedMembership, rememberMembership } from '../lib/membership'
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
 export function SubmitScreen() {
-  const { seasons, seasonFor, limitsFor, loaded } = useSettings()
+  const { seasons, seasonFor, limitsFor, loaded, memberName } = useSettings()
 
   const [membership, setMembership] = useState(getRememberedMembership)
   const [dateOfVisit, setDateOfVisit] = useState(todayISO)
@@ -183,6 +183,9 @@ export function SubmitScreen() {
               <span className="field-error">
                 Please enter your membership number.
               </span>
+            )}
+            {memberName(membership.trim()) && (
+              <span className="field-hint">{memberName(membership.trim())}</span>
             )}
           </label>
           <label className="field">

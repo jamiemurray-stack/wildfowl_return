@@ -45,6 +45,11 @@ type SettingsValue = {
   ) => Promise<string | null>
   setActiveSeason: (name: string) => Promise<string | null>
   addSeason: () => Promise<string | null>
+  members: Record<string, string>
+  memberName: (num: string) => string | undefined
+  memberLabel: (num: string) => string
+  setMember: (num: string, name: string) => Promise<string | null>
+  removeMember: (num: string) => Promise<string | null>
 }
 
 const byNameDesc = (a: SeasonConfig, b: SeasonConfig) =>
@@ -59,6 +64,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     fallbackSeason(DEFAULT_SEASON),
   ])
   const [limitsBySeason, setLimitsBySeason] = useState<Record<string, Limits>>({})
+  const [members, setMembers] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
     const { data: settings } = await supabase
@@ -116,6 +122,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       }
     }
     setLimitsBySeason(map)
+
+    // Optional membership_number → name directory (table may not exist yet).
+    const { data: memberRows } = await supabase
+      .from('members')
+      .select('membership_number, name')
+    const mmap: Record<string, string> = {}
+    for (const r of memberRows ?? []) mmap[r.membership_number] = r.name
+    setMembers(mmap)
+
     setLoaded(true)
   }, [])
 
@@ -131,6 +146,43 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const limitsFor = useCallback(
     (name: string): Limits => limitsBySeason[name] ?? emptyLimits(),
     [limitsBySeason],
+  )
+
+  const memberName = useCallback(
+    (num: string): string | undefined => members[num],
+    [members],
+  )
+  const memberLabel = useCallback(
+    (num: string): string => (members[num] ? `${members[num]} (${num})` : num),
+    [members],
+  )
+  const setMember = useCallback(
+    async (num: string, name: string): Promise<string | null> => {
+      const { error } = await supabase.from('members').upsert(
+        { membership_number: num, name, updated_at: new Date().toISOString() },
+        { onConflict: 'membership_number' },
+      )
+      if (error) return error.message
+      setMembers((prev) => ({ ...prev, [num]: name }))
+      return null
+    },
+    [],
+  )
+  const removeMember = useCallback(
+    async (num: string): Promise<string | null> => {
+      const { error } = await supabase
+        .from('members')
+        .delete()
+        .eq('membership_number', num)
+      if (error) return error.message
+      setMembers((prev) => {
+        const next = { ...prev }
+        delete next[num]
+        return next
+      })
+      return null
+    },
+    [],
   )
 
   const setSeasonConfig = useCallback(
@@ -233,6 +285,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSpeciesLimit,
       setActiveSeason,
       addSeason,
+      members,
+      memberName,
+      memberLabel,
+      setMember,
+      removeMember,
     }),
     [
       loaded,
@@ -245,6 +302,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setSpeciesLimit,
       setActiveSeason,
       addSeason,
+      members,
+      memberName,
+      memberLabel,
+      setMember,
+      removeMember,
     ],
   )
 

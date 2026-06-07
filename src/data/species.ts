@@ -3,13 +3,13 @@
  * column name in the Supabase `bag_returns` table; `label` is shown in the UI.
  */
 export const SPECIES = [
-  { key: 'pink_footed_goose', label: 'Pink-Footed Goose' },
-  { key: 'greylag_goose', label: 'Greylag Goose' },
-  { key: 'canada_goose', label: 'Canada Goose' },
-  { key: 'mallard', label: 'Mallard' },
-  { key: 'wigeon', label: 'Wigeon' },
-  { key: 'teal', label: 'Teal' },
-  { key: 'snipe', label: 'Snipe' },
+  { key: 'pink_footed_goose', label: 'Pink-Footed Goose', short: 'Pinkfoot' },
+  { key: 'greylag_goose', label: 'Greylag Goose', short: 'Greylag' },
+  { key: 'canada_goose', label: 'Canada Goose', short: 'Canada' },
+  { key: 'mallard', label: 'Mallard', short: 'Mallard' },
+  { key: 'wigeon', label: 'Wigeon', short: 'Wigeon' },
+  { key: 'teal', label: 'Teal', short: 'Teal' },
+  { key: 'snipe', label: 'Snipe', short: 'Snipe' },
 ] as const
 
 export type SpeciesKey = (typeof SPECIES)[number]['key']

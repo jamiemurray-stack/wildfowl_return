@@ -230,6 +230,12 @@ button:focus-visible,
   border-radius: 12px;
   padding: 4px;
   gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
 }
 
 .segment {
@@ -241,6 +247,7 @@ button:focus-visible,
   font-weight: 600;
   color: var(--brand-dark);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .segment.is-active {
@@ -1206,4 +1213,149 @@ button:focus-visible,
 .season-warning-text {
   font-size: 14px;
   line-height: 1.45;
+}
+
+/* ---- Leaderboard ---- */
+.lb-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.lb-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lb-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+.lb-table th,
+.lb-table td {
+  padding: 10px 12px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.lb-table th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.lb-table tbody td {
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-sort {
+  cursor: pointer;
+  user-select: none;
+}
+
+.lb-member {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  text-align: left;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.lb-table thead .lb-member {
+  z-index: 2;
+}
+
+.lb-rank-badge {
+  display: inline-block;
+  min-width: 16px;
+  margin-right: 8px;
+  color: var(--muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-total-col {
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+.lb-table tfoot td {
+  font-weight: 800;
+  border-top: 2px solid var(--line);
+  background: #fafbfa;
+}
+
+.lb-table tfoot .lb-member {
+  background: #fafbfa;
+}
+
+/* ---- Members tab ---- */
+.member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+}
+
+.member-row + .member-row {
+  border-top: 1px solid var(--line);
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.member-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.member-num {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-link-danger {
+  color: var(--danger);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-dark);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip:active {
+  background: var(--brand-tint);
 }

@@ -14,7 +14,7 @@ A bottom tab bar with three tabs:
 | --- | --- | --- |
 | **Submit** | 📋 | Members log a visit: membership number, date (within the season window), location, a stepper per species, a "Nil return" toggle, live total, and notes. Enforces limits — a species blanks out at its cap, and if the season visit or total-bird limit is reached the form closes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
-| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** (view any past season) and four sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Issues** (shows an **unseen-report badge** that clears when the tab is opened; CSV), and **Settings** (edit season dates &amp; the three limit types, a **seasons table** to make any season active or **add the next season** as a row, and **copy all limits from the previous season**). |
+| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** and sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Leaderboard** (per-member season totals, sortable by any species or the total; CSV), **Issues** (unseen-report badge; CSV), **Members** (assign names to membership numbers), and **Settings** (season dates, the three limit types, a seasons table to make any season active / add the next one, and copy limits from the previous season). |
 
 **Submit** and **Report** are open to all members. The **Admin** panel aggregates
 every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock
@@ -73,6 +73,12 @@ you make any season active with one tap (handy to undo an accidental change).
 dates & limits; you can also **copy all limits from the previous season** onto the
 season you're editing. A warning banner appears on the Submit and Admin screens
 when today's date is more than ~3 months outside the active season.
+
+### Members
+
+- **`members`** — optional `membership_number` → `name` directory. Where a name
+  exists it's shown alongside the number across the admin (leaderboard, returns,
+  issues) and as a hint on the Submit form; otherwise the number shows on its own.
 
 ## Security model
 

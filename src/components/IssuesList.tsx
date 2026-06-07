@@ -1,5 +1,6 @@
 import { formatDateTime } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
+import { useSettings } from '../lib/useSettings'
 import type { IssueReport } from '../types'
 import type { LoadState } from '../lib/useBagReturns'
 
@@ -14,6 +15,8 @@ export function IssuesList({
   error: string
   reload: () => void
 }) {
+  const { memberLabel } = useSettings()
+
   const exportCsv = () => {
     const headers = [
       'Submitted At',
@@ -80,7 +83,7 @@ export function IssuesList({
                 )}
                 <span className="issue-tag">
                   {issue.membership_number
-                    ? `No. ${issue.membership_number}`
+                    ? memberLabel(issue.membership_number)
                     : 'Anonymous'}
                 </span>
               </div>
