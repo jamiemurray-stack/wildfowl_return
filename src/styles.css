@@ -432,6 +432,11 @@ button:focus-visible,
   white-space: nowrap;
 }
 
+.btn-link:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ---- Admin gate ---- */
 .gate {
   display: flex;
@@ -515,6 +520,12 @@ button:focus-visible,
   color: var(--muted);
   font-size: 13px;
   font-weight: 500;
+}
+
+.subhead-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* ---- Report stats ---- */

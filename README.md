@@ -14,7 +14,7 @@ A bottom tab bar with three tabs:
 | --- | --- | --- |
 | **Submit** | 📋 | The main form. Members log a visit: membership number, date, location (Sands / Marshes), a stepper for each of the seven quarry species, a "Nil return" toggle, a live "Total shot" total, and optional notes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
-| **Admin** | 📊 | Password-gated panel with three sub-views: **Season Report** (visual totals — stat tiles plus bar charts by species, location and month), **Returns** (every bag return; tap for the full record), and **Issues** (everything reported via the Report tab). |
+| **Admin** | 📊 | Password-gated panel with three sub-views: **Season Report** (visual totals — stat tiles plus bar charts by species, location and month), **Returns** (every bag return; tap for the full record), and **Issues** (everything reported via the Report tab). Returns and Issues each have a one-tap **CSV export** that opens straight in Excel. |
 
 **Submit** and **Report** are open to all members. The **Admin** panel aggregates
 every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock

@@ -2,11 +2,36 @@ import { useState } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
 import { SPECIES } from '../data/species'
 import { formatDate, formatDateTime } from '../lib/season'
+import { toCsv, downloadCsv } from '../lib/csv'
 import type { BagReturn } from '../types'
 
 export function ReturnsList() {
   const { data, state, error, reload } = useBagReturns()
   const [selected, setSelected] = useState<BagReturn | null>(null)
+
+  const exportCsv = () => {
+    const headers = [
+      'Membership Number',
+      'Date of Visit',
+      'Location',
+      ...SPECIES.map((s) => s.label),
+      'Nil Return',
+      'Total Shot',
+      'Notes',
+      'Submitted At',
+    ]
+    const rows = data.map((r) => [
+      r.membership_number,
+      r.date_of_visit,
+      r.location,
+      ...SPECIES.map((s) => r[s.key]),
+      r.nil_return ? 'Yes' : 'No',
+      r.total_shot,
+      r.notes ?? '',
+      r.submitted_at,
+    ])
+    downloadCsv('bag-returns-2025-26.csv', toCsv(headers, rows))
+  }
 
   if (selected) {
     return <ReturnDetail record={selected} onBack={() => setSelected(null)} />
@@ -18,9 +43,19 @@ export function ReturnsList() {
         <span className="muted-count">
           {state === 'ready' ? `${data.length} return${data.length === 1 ? '' : 's'}` : ' '}
         </span>
-        <button type="button" className="btn-link" onClick={reload}>
-          ↻ Refresh
-        </button>
+        <div className="subhead-actions">
+          <button
+            type="button"
+            className="btn-link"
+            onClick={exportCsv}
+            disabled={data.length === 0}
+          >
+            ⬇ Export CSV
+          </button>
+          <button type="button" className="btn-link" onClick={reload}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       {state === 'loading' && <p className="state">Loading…</p>}

@@ -1,8 +1,27 @@
 import { useIssueReports } from '../lib/useIssueReports'
 import { formatDateTime } from '../lib/season'
+import { toCsv, downloadCsv } from '../lib/csv'
 
 export function IssuesList() {
   const { data, state, error, reload } = useIssueReports()
+
+  const exportCsv = () => {
+    const headers = [
+      'Submitted At',
+      'Category',
+      'Location',
+      'Membership Number',
+      'Description',
+    ]
+    const rows = data.map((i) => [
+      i.submitted_at,
+      i.category,
+      i.location ?? '',
+      i.membership_number ?? '',
+      i.description,
+    ])
+    downloadCsv('issues-2025-26.csv', toCsv(headers, rows))
+  }
 
   return (
     <div className="screen">
@@ -12,9 +31,19 @@ export function IssuesList() {
             ? `${data.length} issue${data.length === 1 ? '' : 's'}`
             : ' '}
         </span>
-        <button type="button" className="btn-link" onClick={reload}>
-          ↻ Refresh
-        </button>
+        <div className="subhead-actions">
+          <button
+            type="button"
+            className="btn-link"
+            onClick={exportCsv}
+            disabled={data.length === 0}
+          >
+            ⬇ Export CSV
+          </button>
+          <button type="button" className="btn-link" onClick={reload}>
+            ↻ Refresh
+          </button>
+        </div>
       </div>
 
       {state === 'loading' && <p className="state">Loading…</p>}
