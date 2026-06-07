@@ -4,8 +4,8 @@ import type { BagReturn } from '../types'
 
 export type LoadState = 'loading' | 'ready' | 'error'
 
-/** Fetches all bag returns, newest visit first. Shared by Report & History. */
-export function useBagReturns() {
+/** Fetches bag returns (optionally for one season), newest visit first. */
+export function useBagReturns(season?: string) {
   const [data, setData] = useState<BagReturn[]>([])
   const [state, setState] = useState<LoadState>('loading')
   const [error, setError] = useState('')
@@ -13,9 +13,9 @@ export function useBagReturns() {
   const reload = useCallback(async () => {
     setState('loading')
     setError('')
-    const { data, error } = await supabase
-      .from('bag_returns')
-      .select('*')
+    let query = supabase.from('bag_returns').select('*')
+    if (season) query = query.eq('season', season)
+    const { data, error } = await query
       .order('date_of_visit', { ascending: false })
       .order('submitted_at', { ascending: false })
     if (error) {
@@ -25,7 +25,7 @@ export function useBagReturns() {
     }
     setData((data ?? []) as BagReturn[])
     setState('ready')
-  }, [])
+  }, [season])
 
   useEffect(() => {
     reload()

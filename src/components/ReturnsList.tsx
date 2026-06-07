@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
+import { useSettings } from '../lib/useSettings'
 import { SPECIES } from '../data/species'
-import { formatDate, formatDateTime } from '../lib/season'
+import { formatDate, formatDateTime, seasonShort } from '../lib/season'
 import { toCsv, downloadCsv } from '../lib/csv'
+import { EditReturn } from './EditReturn'
 import type { BagReturn } from '../types'
 
 export function ReturnsList() {
-  const { data, state, error, reload } = useBagReturns()
+  const { season } = useSettings()
+  const { data, state, error, reload } = useBagReturns(season.name)
   const [selected, setSelected] = useState<BagReturn | null>(null)
+  const [editing, setEditing] = useState(false)
 
   const exportCsv = () => {
     const headers = [
@@ -30,18 +34,43 @@ export function ReturnsList() {
       r.notes ?? '',
       r.submitted_at,
     ])
-    downloadCsv('bag-returns-2025-26.csv', toCsv(headers, rows))
+    downloadCsv(
+      `bag-returns-${seasonShort(season.name).replace('/', '-')}.csv`,
+      toCsv(headers, rows),
+    )
+  }
+
+  if (selected && editing) {
+    return (
+      <EditReturn
+        record={selected}
+        onCancel={() => setEditing(false)}
+        onDone={() => {
+          setEditing(false)
+          setSelected(null)
+          reload()
+        }}
+      />
+    )
   }
 
   if (selected) {
-    return <ReturnDetail record={selected} onBack={() => setSelected(null)} />
+    return (
+      <ReturnDetail
+        record={selected}
+        onBack={() => setSelected(null)}
+        onEdit={() => setEditing(true)}
+      />
+    )
   }
 
   return (
     <div className="screen">
       <div className="subhead">
         <span className="muted-count">
-          {state === 'ready' ? `${data.length} return${data.length === 1 ? '' : 's'}` : ' '}
+          {state === 'ready'
+            ? `${data.length} return${data.length === 1 ? '' : 's'}`
+            : ' '}
         </span>
         <div className="subhead-actions">
           <button
@@ -63,7 +92,7 @@ export function ReturnsList() {
         <p className="state state-error">Couldn’t load returns: {error}</p>
       )}
       {state === 'ready' && data.length === 0 && (
-        <p className="state">No returns submitted yet.</p>
+        <p className="state">No returns this season yet.</p>
       )}
 
       {state === 'ready' && data.length > 0 && (
@@ -103,15 +132,22 @@ export function ReturnsList() {
 function ReturnDetail({
   record,
   onBack,
+  onEdit,
 }: {
   record: BagReturn
   onBack: () => void
+  onEdit: () => void
 }) {
   return (
     <div className="screen">
-      <button type="button" className="back-btn" onClick={onBack}>
-        ‹ Back to returns
-      </button>
+      <div className="list-header">
+        <button type="button" className="back-btn" onClick={onBack}>
+          ‹ Back
+        </button>
+        <button type="button" className="btn-link" onClick={onEdit}>
+          Edit
+        </button>
+      </div>
 
       <section className="card">
         <div className="detail-row">

@@ -12,9 +12,9 @@ A bottom tab bar with three tabs:
 
 | Tab | Icon | What it does |
 | --- | --- | --- |
-| **Submit** | 📋 | The main form. Members log a visit: membership number, date, location (Sands / Marshes), a stepper for each of the seven quarry species, a "Nil return" toggle, a live "Total shot" total, and optional notes. |
+| **Submit** | 📋 | Members log a visit: membership number, date (within the season window), location, a stepper per species, a "Nil return" toggle, live total, and notes. Enforces limits — a species blanks out at its cap, and if the season visit or total-bird limit is reached the form closes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
-| **Admin** | 📊 | Password-gated panel with three sub-views: **Season Report** (visual totals — stat tiles plus bar charts by species, location and month), **Returns** (every bag return; tap for the full record), and **Issues** (everything reported via the Report tab). Returns and Issues each have a one-tap **CSV export** that opens straight in Excel. |
+| **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with four sub-views: **Overview** (limit monitoring — alerts + progress bars for visits, total birds and each species, plus season charts and CSV export), **Returns** (tap a record to view / **edit** / delete; CSV export), **Issues** (CSV export), and **Settings** (season dates, the three limit types, and "start next season"). |
 
 **Submit** and **Report** are open to all members. The **Admin** panel aggregates
 every member's data, so it is behind a password gate (`M4rkJ0n3s`); the unlock
@@ -50,21 +50,36 @@ always computed by the database and can't drift from the species counts.
 | `description` | text | the issue |
 | `submitted_at` | timestamptz | set automatically on insert |
 
+### Seasons & limits
+
+- **`seasons`** — one row per season: `name` (e.g. `2025/26`), `start_date`,
+  `end_date` (defaults 1 Sep → 20 Feb), `max_visits`, `max_total_birds`.
+- **`species_limits`** — per-season, per-species club caps (`limit_value`;
+  blank = no limit).
+- **`app_settings`** — singleton pointer to the `current_season`.
+- `bag_returns.season` tags every return with its season (set by a DB trigger).
+  "Start next season" repoints `current_season` and resets live totals to zero
+  while the old rows stay archived.
+
+A `species_season_totals` view aggregates per-season totals (visits, total birds
+and each species) and powers the limit checks shown on the Submit form and the
+Admin overview.
+
 ## Security model
 
 This is a club app with no member logins, so it uses Supabase's **publishable**
 key in the browser (safe by design — it's not a secret). Access is controlled by
 **Row Level Security**:
 
-- **Insert** — allowed for everyone (members submit without an account).
-- **Select** — allowed for everyone (the Admin panel is gated client-side).
-- **Update / Delete** — no policy, so submitted rows are **immutable** via the
-  app; they can only be changed from the Supabase dashboard.
+- **Insert / Select** — allowed for everyone (members submit without an account;
+  the Admin panel is gated client-side).
+- **Update / Delete** — enabled on `bag_returns` so the admin can edit/remove
+  records and manage seasons/limits; `issue_reports` stays insert-only.
 
-Both `bag_returns` and `issue_reports` use this same model. The `M4rkJ0n3s`
-password is a lightweight client-side gate on the Admin panel, not a server-side
-protection. If you later want true protection (e.g. so only an admin can read all
-data), add Supabase Auth and tighten the `select` policies.
+The `M4rkJ0n3s` password is a lightweight client-side gate on the Admin panel
+(including the season and limit controls), not server-side protection — because
+those actions run with the public key, treat the password as deterrence, not
+security. For true protection, add Supabase Auth and tighten the policies.
 
 ## Local development
 

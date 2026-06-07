@@ -262,6 +262,15 @@ button:focus-visible,
 .stepper-label {
   font-size: 15px;
   font-weight: 500;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepper-hint {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 2px;
 }
 
 .stepper-row.is-disabled .stepper-label {
@@ -925,4 +934,138 @@ button:focus-visible,
 .tab.is-active .tab-icon {
   filter: none;
   opacity: 1;
+}
+
+/* ---- Warn banner (approaching limits) ---- */
+.banner-warn {
+  background: #fdf0dc;
+  color: #8a5a16;
+  border: 1px solid #f3dcb4;
+}
+
+/* ---- Limit status bars (admin overview) ---- */
+.limit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.limit-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.limit-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.limit-val {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.limit-track {
+  display: block;
+  height: 10px;
+  background: #eef1ec;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.limit-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.limit-fill.is-ok {
+  background: var(--brand);
+}
+.limit-fill.is-approaching {
+  background: #e0a106;
+}
+.limit-fill.is-reached {
+  background: var(--danger);
+}
+.limit-fill.is-none {
+  background: #cfd6d0;
+}
+
+/* ---- Settings ---- */
+.limit-edit-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.limit-edit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.limit-edit-row + .limit-edit-row {
+  border-top: 1px solid var(--line);
+}
+
+.limit-edit-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.limit-input {
+  width: 92px;
+  text-align: right;
+}
+
+.settings-note {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.confirm-row {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-row .btn {
+  flex: 1;
+}
+
+/* ---- Secondary / danger buttons ---- */
+.btn-secondary {
+  background: var(--brand-tint);
+  color: var(--brand-dark);
+}
+.btn-secondary:active {
+  background: #d9e8df;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:active {
+  background: #8f2e23;
+}
+
+.btn-danger-outline {
+  background: #fff;
+  color: var(--danger);
+  border: 1px solid #e7c4bf;
+}
+.btn-danger-outline:active {
+  background: #fbeeec;
 }

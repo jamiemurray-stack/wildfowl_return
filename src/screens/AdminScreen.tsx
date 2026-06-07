@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { AdminGate } from '../components/AdminGate'
 import { Segmented } from '../components/Segmented'
-import { SeasonReport } from '../components/SeasonReport'
+import { AdminOverview } from '../components/AdminOverview'
 import { ReturnsList } from '../components/ReturnsList'
 import { IssuesList } from '../components/IssuesList'
+import { SettingsView } from '../components/SettingsView'
 
-const SUBVIEWS = ['Report', 'Returns', 'Issues'] as const
+const SUBVIEWS = ['Overview', 'Returns', 'Issues', 'Settings'] as const
 type SubView = (typeof SUBVIEWS)[number]
 
 export function AdminScreen() {
@@ -17,14 +18,10 @@ export function AdminScreen() {
 }
 
 function AdminPanel() {
-  const [view, setView] = useState<SubView>('Report')
+  const [view, setView] = useState<SubView>('Overview')
 
   return (
     <div className="screen">
-      <header className="list-header">
-        <h1 className="screen-title">Admin</h1>
-      </header>
-
       <Segmented
         options={SUBVIEWS}
         value={view}
@@ -32,9 +29,10 @@ function AdminPanel() {
         ariaLabel="Admin section"
       />
 
-      {view === 'Report' && <SeasonReport />}
+      {view === 'Overview' && <AdminOverview />}
       {view === 'Returns' && <ReturnsList />}
       {view === 'Issues' && <IssuesList />}
+      {view === 'Settings' && <SettingsView />}
     </div>
   )
 }

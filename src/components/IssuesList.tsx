@@ -20,7 +20,7 @@ export function IssuesList() {
       i.membership_number ?? '',
       i.description,
     ])
-    downloadCsv('issues-2025-26.csv', toCsv(headers, rows))
+    downloadCsv('issues.csv', toCsv(headers, rows))
   }
 
   return (
