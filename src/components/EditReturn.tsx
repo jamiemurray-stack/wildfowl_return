@@ -7,7 +7,6 @@ import {
   type SpeciesCounts,
   type SpeciesKey,
 } from '../data/species'
-import { defaultSeasonDates } from '../lib/season'
 import { Stepper } from './Stepper'
 import { Segmented } from './Segmented'
 import type { BagReturn, LocationName } from '../types'
@@ -37,7 +36,6 @@ export function EditReturn({
   const [errorMsg, setErrorMsg] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const bounds = defaultSeasonDates(record.season)
   const total = sumCounts(counts)
 
   const setCount = (key: SpeciesKey, value: number) => {
@@ -115,10 +113,11 @@ export function EditReturn({
             className="input"
             type="date"
             value={dateOfVisit}
-            min={bounds.start_date}
-            max={bounds.end_date}
             onChange={(e) => setDateOfVisit(e.target.value)}
           />
+          <span className="field-hint">
+            Changing the date may move this return to another season.
+          </span>
         </label>
         <div className="field">
           <span className="field-label">Location</span>

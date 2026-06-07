@@ -50,8 +50,9 @@ export function SubmitScreen() {
   const limits = limitsFor(seasonName)
   const { totals, reload: reloadTotals } = useSeasonTotals(seasonName)
 
-  // Visit dates: from the earliest known season up to today (no future visits).
-  const maxDate = todayISO()
+  // Visit dates can be picked from the earliest known season onwards. No upper
+  // bound, so a visit in an upcoming season can be logged (and the date→season
+  // filing tested) before that season is "active".
   const minDate = seasons.reduce(
     (min, s) => (s.start_date < min ? s.start_date : min),
     season.start_date,
@@ -189,7 +190,6 @@ export function SubmitScreen() {
               type="date"
               value={dateOfVisit}
               min={minDate}
-              max={maxDate}
               onChange={(e) => {
                 setDateOfVisit(e.target.value)
                 if (status !== 'idle') setStatus('idle')
