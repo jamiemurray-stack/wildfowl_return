@@ -273,7 +273,14 @@ button:focus-visible,
   margin-top: 2px;
 }
 
-.stepper-row.is-disabled .stepper-label {
+.stepper-row.is-disabled {
+  background: #e3e7e1;
+  border-radius: 6px;
+}
+
+.stepper-row.is-disabled .stepper-label,
+.stepper-row.is-disabled .step-value,
+.stepper-row.is-disabled .stepper-hint {
   color: var(--muted);
 }
 

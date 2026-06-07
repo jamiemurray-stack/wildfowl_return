@@ -88,7 +88,7 @@ export function AdminOverview() {
       value: totals[s.key],
       limit: limits[s.key],
     })),
-  ]
+  ].filter((row) => row.limit != null)
 
   const refresh = () => {
     reloadTotals()
@@ -173,7 +173,12 @@ export function AdminOverview() {
 
       <section className="card">
         <h2 className="card-title">Limit status</h2>
-        <ul className="limit-list">
+        {limitRows.length === 0 ? (
+          <p className="settings-note">
+            No limits set for this season — add them in the Settings tab.
+          </p>
+        ) : (
+          <ul className="limit-list">
           {limitRows.map((row) => {
             const st = statusOf(row.value, row.limit)
             return (
@@ -195,7 +200,8 @@ export function AdminOverview() {
               </li>
             )
           })}
-        </ul>
+          </ul>
+        )}
       </section>
 
       {state === 'error' && (
