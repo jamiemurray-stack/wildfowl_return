@@ -53,6 +53,8 @@ export function SubmitScreen() {
   // Visit dates can be picked from the earliest known season onwards. No upper
   // bound, so a visit in an upcoming season can be logged (and the date→season
   // filing tested) before that season is "active".
+  // TODO (before go-live): re-add an upper bound — e.g. the furthest configured
+  // season's end date — to stop accidental far-future dates. Removed for testing.
   const minDate = seasons.reduce(
     (min, s) => (s.start_date < min ? s.start_date : min),
     season.start_date,
