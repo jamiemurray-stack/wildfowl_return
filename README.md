@@ -57,10 +57,10 @@ always computed by the database and can't drift from the species counts.
 - **`species_limits`** — per-season, per-species club caps (`limit_value`;
   blank = no limit).
 - **`app_settings`** — singleton pointer to the `current_season`.
-- `bag_returns.season` tags every return with its season. The app sets this from
-  the **visit date** (the season whose date window contains it), so returns are
-  filed correctly regardless of which season is active. A DB trigger fills it from
-  the active season only as a fallback when the client doesn't supply one.
+- `bag_returns.season` tags every return with its season. A DB trigger derives it
+  from the **visit date** (the season whose date window contains it, else the
+  natural autumn→winter season) on every insert and edit, so a return can't be
+  filed against the wrong season regardless of which season is active.
 
 A `species_season_totals` view aggregates per-season totals (visits, total birds
 and each species) and powers the limit checks shown on the Submit form and the

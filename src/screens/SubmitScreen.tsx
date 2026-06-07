@@ -43,8 +43,8 @@ export function SubmitScreen() {
     rememberMembership(membership)
   }, [membership])
 
-  // The season is decided by the visit date, not by which season is "active",
-  // so returns can never be filed against the wrong season.
+  // The database files each return by its visit date (authoritative trigger).
+  // We mirror that here to show which season it lands in and apply its limits.
   const seasonName = resolveSeasonName(dateOfVisit, seasons)
   const season = seasonFor(seasonName)
   const limits = limitsFor(seasonName)
@@ -116,7 +116,7 @@ export function SubmitScreen() {
       ...counts,
       nil_return: nilReturn,
       notes: notes.trim() || null,
-      season: seasonName, // filed by the visit date
+      // season is set by the DB trigger from date_of_visit
     })
 
     if (error) {
