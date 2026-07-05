@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { TabBar, type TabKey } from './components/TabBar'
 import { SubmitScreen } from './screens/SubmitScreen'
 import { ReportIssueScreen } from './screens/ReportIssueScreen'
@@ -19,6 +20,7 @@ export default function App() {
         </main>
         <TabBar active={tab} onChange={setTab} />
       </div>
+      <Analytics />
     </SettingsProvider>
   )
 }
