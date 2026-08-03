@@ -1,5 +1,15 @@
 # UI & QA Audit — Grange & District Wildfowlers Bag Return
 
+> **Update (same day):** the recommended harden / polish / clarify / optimize /
+> adapt passes have been applied on this branch. All five P1s, all P2s except
+> the accepted-risk security posture and the server-side cap trigger (both need
+> DB-side changes), and the P3 items 1–5, 8, 9 and 11-adjacent (network-failure
+> guards) are fixed. Still open: Supabase RPC/auth hardening, a DB-side cap
+> check, emoji→SVG icons, and a service-worker offline queue. During the work a
+> further P1-class bug was found and fixed: a hard network failure *rejects*
+> supabase-js fetches, which bypassed every `{ error }` check and could leave
+> forms stuck on "Saving…" — all queries and mutations are now guarded.
+
 *Audited 3 Aug 2026 on `claude/ui-qa-audit-cty145` (HEAD `3fac794`). Method: Impeccable technical audit (accessibility, performance, theming, responsive, implementation integrity) plus a general QA pass over correctness, data handling and robustness. Every finding was verified against the source; contrast ratios were computed, not estimated. `npm run typecheck` and `npm run build` both pass clean.*
 
 ## Audit Health Score

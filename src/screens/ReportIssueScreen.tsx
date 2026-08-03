@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, thrownMessage } from '../lib/supabase'
 import { ISSUE_CATEGORIES, ISSUE_LOCATIONS } from '../data/issues'
-import { getRememberedMembership, rememberMembership } from '../lib/membership'
+import {
+  getRememberedMembership,
+  rememberMembership,
+  normalizeMembership,
+} from '../lib/membership'
+import { scrollToTop } from '../lib/scroll'
 
 export function ReportIssueScreen() {
   const [membership, setMembership] = useState(getRememberedMembership)
@@ -36,16 +41,22 @@ export function ReportIssueScreen() {
     setStatus('saving')
     setErrorMsg('')
 
-    const { error } = await supabase.from('issue_reports').insert({
-      membership_number: membership.trim() || null,
-      category,
-      location: location || null,
-      description: description.trim(),
-    })
-
-    if (error) {
+    try {
+      const { error } = await supabase.from('issue_reports').insert({
+        membership_number: normalizeMembership(membership) || null,
+        category,
+        location: location || null,
+        description: description.trim(),
+      })
+      if (error) throw new Error(error.message)
+    } catch (e) {
+      const msg = thrownMessage(e)
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(
+        /fetch|network|load failed/i.test(msg)
+          ? 'no connection. Your report is still here — try again when you have signal.'
+          : msg,
+      )
       return
     }
 
@@ -54,7 +65,7 @@ export function ReportIssueScreen() {
     setCategory('')
     setLocation('')
     setDescription('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToTop()
   }
 
   return (

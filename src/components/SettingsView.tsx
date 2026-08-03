@@ -61,21 +61,42 @@ export function SettingsView({
     setCopyStatus('idle')
   }, [limits])
 
-  const parseLimit = (v: string): number | null => {
+  /** A limit box holds a whole number or is blank (no limit). Anything else —
+   *  "1O0", "-5", "ten" — is a typo that must not silently become "no limit". */
+  const parseLimit = (v: string): { ok: boolean; value: number | null } => {
     const t = v.trim()
-    if (t === '') return null
-    const n = parseInt(t, 10)
-    return isNaN(n) || n < 0 ? null : n
+    if (t === '') return { ok: true, value: null }
+    if (!/^\d+$/.test(t)) return { ok: false, value: null }
+    return { ok: true, value: parseInt(t, 10) }
   }
 
   const saveSeason = async () => {
+    const visits = parseLimit(maxVisits)
+    const birds = parseLimit(maxBirds)
+    if (!visits.ok || !birds.ok) {
+      setSeasonStatus('error')
+      setSeasonErr(
+        `“${!visits.ok ? maxVisits : maxBirds}” isn’t a number — enter a whole number, or clear the box for no limit.`,
+      )
+      return
+    }
+    if (!startDate || !endDate) {
+      setSeasonStatus('error')
+      setSeasonErr('Enter both a start and an end date.')
+      return
+    }
+    if (endDate <= startDate) {
+      setSeasonStatus('error')
+      setSeasonErr('The end date must be after the start date.')
+      return
+    }
     setSeasonStatus('saving')
     setSeasonErr('')
     const err = await setSeasonConfig(season.name, {
       start_date: startDate,
       end_date: endDate,
-      max_visits: parseLimit(maxVisits),
-      max_total_birds: parseLimit(maxBirds),
+      max_visits: visits.value,
+      max_total_birds: birds.value,
     })
     if (err) {
       setSeasonStatus('error')
@@ -86,13 +107,23 @@ export function SettingsView({
   }
 
   const saveLimits = async () => {
+    for (const s of SPECIES) {
+      const parsed = parseLimit(limitInputs[s.key] ?? '')
+      if (!parsed.ok) {
+        setLimitsStatus('error')
+        setLimitsErr(
+          `“${limitInputs[s.key]}” isn’t a number for ${s.label} — enter a whole number, or clear the box for no limit.`,
+        )
+        return
+      }
+    }
     setLimitsStatus('saving')
     setLimitsErr('')
     for (const s of SPECIES) {
       const err = await setSpeciesLimit(
         season.name,
         s.key,
-        parseLimit(limitInputs[s.key] ?? ''),
+        parseLimit(limitInputs[s.key] ?? '').value,
       )
       if (err) {
         setLimitsStatus('error')

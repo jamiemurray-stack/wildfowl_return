@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, thrownMessage } from './supabase'
 import { SPECIES } from '../data/species'
 import type { SeasonTotals } from '../types'
 
@@ -13,27 +13,50 @@ const zero = (): SeasonTotals =>
     total_birds: 0,
   }) as SeasonTotals
 
+const rowToTotals = (row: Record<string, number>): SeasonTotals => {
+  const t = zero()
+  for (const s of SPECIES) t[s.key] = row[s.key] ?? 0
+  t.returns = row.returns ?? 0
+  t.total_birds = row.total_birds ?? 0
+  return t
+}
+
+/** One-shot fetch of a season's totals — used to re-check limits at the moment
+ *  of submission. Throws on query failure so callers can tell "no returns yet"
+ *  (zeros) apart from "couldn't check". */
+export async function fetchSeasonTotals(season: string): Promise<SeasonTotals> {
+  const { data, error } = await supabase
+    .from('species_season_totals')
+    .select('*')
+    .eq('season', season)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? rowToTotals(data as unknown as Record<string, number>) : zero()
+}
+
 /** Live per-species + visit + bird totals for a season (from the totals view). */
 export function useSeasonTotals(season: string) {
   const [totals, setTotals] = useState<SeasonTotals>(zero)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const reload = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('species_season_totals')
-      .select('*')
-      .eq('season', season)
-      .maybeSingle()
-    if (data) {
-      const row = data as unknown as Record<string, number>
-      const t = zero()
-      for (const s of SPECIES) t[s.key] = row[s.key] ?? 0
-      t.returns = row.returns ?? 0
-      t.total_birds = row.total_birds ?? 0
-      setTotals(t)
-    } else {
-      setTotals(zero())
+    try {
+      const { data, error } = await supabase
+        .from('species_season_totals')
+        .select('*')
+        .eq('season', season)
+        .maybeSingle()
+      if (error) throw new Error(error.message)
+      setError('')
+      setTotals(
+        data ? rowToTotals(data as unknown as Record<string, number>) : zero(),
+      )
+    } catch (e) {
+      // Keep whatever we last knew rather than pretending the season is empty —
+      // zeroed totals would silently reopen every limit.
+      setError(thrownMessage(e))
     }
     setLoading(false)
   }, [season])
@@ -42,5 +65,5 @@ export function useSeasonTotals(season: string) {
     reload()
   }, [reload])
 
-  return { totals, loading, reload }
+  return { totals, loading, error, reload }
 }

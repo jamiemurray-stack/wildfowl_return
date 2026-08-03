@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, thrownMessage } from '../lib/supabase'
 import {
   SPECIES,
   zeroCounts,
@@ -11,20 +11,34 @@ import {
   CLUB_TITLE,
   seasonSubtitle,
   captionFromDates,
+  formatDate,
   todayISO,
   resolveSeasonName,
 } from '../lib/season'
 import { useSettings } from '../lib/useSettings'
-import { useSeasonTotals } from '../lib/useSeasonTotals'
+import { useSeasonTotals, fetchSeasonTotals } from '../lib/useSeasonTotals'
 import { Stepper } from '../components/Stepper'
 import { Segmented } from '../components/Segmented'
 import type { LocationName } from '../types'
-import { getRememberedMembership, rememberMembership } from '../lib/membership'
+import {
+  getRememberedMembership,
+  rememberMembership,
+  normalizeMembership,
+} from '../lib/membership'
+import { scrollToTop } from '../lib/scroll'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
+/** Friendly wording for a failed network round-trip — the raw message
+ *  ("Failed to fetch") means nothing on a marsh with one bar of signal. */
+const friendlyError = (message: string): string =>
+  /fetch|network|load failed/i.test(message)
+    ? 'no connection. Your entries are still here — try again when you have signal.'
+    : message
+
 export function SubmitScreen() {
-  const { seasons, seasonFor, limitsFor, loaded, memberName } = useSettings()
+  const { activeName, seasons, seasonFor, limitsFor, loaded, loadError, memberName } =
+    useSettings()
 
   const [membership, setMembership] = useState(getRememberedMembership)
   const [dateOfVisit, setDateOfVisit] = useState(todayISO)
@@ -45,19 +59,30 @@ export function SubmitScreen() {
 
   // The database files each return by its visit date (authoritative trigger).
   // We mirror that here to show which season it lands in and apply its limits.
-  const seasonName = resolveSeasonName(dateOfVisit, seasons)
+  // While the date field is cleared, fall back to the active season so the
+  // header and limits stay sensible.
+  const seasonName = dateOfVisit
+    ? resolveSeasonName(dateOfVisit, seasons)
+    : activeName
   const season = seasonFor(seasonName)
   const limits = limitsFor(seasonName)
-  const { totals, reload: reloadTotals } = useSeasonTotals(seasonName)
+  const {
+    totals,
+    error: totalsError,
+    reload: reloadTotals,
+  } = useSeasonTotals(seasonName)
 
-  // Visit dates can be picked from the earliest known season onwards. No upper
-  // bound, so a visit in an upcoming season can be logged (and the date→season
-  // filing tested) before that season is "active".
-  // TODO (before go-live): re-add an upper bound — e.g. the furthest configured
-  // season's end date — to stop accidental far-future dates. Removed for testing.
+  // Visit dates span the configured seasons: from the earliest season's start
+  // to the furthest season's end, so a fat-fingered far-future year is caught.
+  // Today is always allowed — a member logging today's visit must never be
+  // blocked just because the next season hasn't been configured yet.
   const minDate = seasons.reduce(
     (min, s) => (s.start_date < min ? s.start_date : min),
     season.start_date,
+  )
+  const maxDate = seasons.reduce(
+    (max, s) => (s.end_date > max ? s.end_date : max),
+    todayISO(),
   )
 
   const total = sumCounts(counts)
@@ -96,12 +121,46 @@ export function SubmitScreen() {
   }
 
   const membershipValid = membership.trim() !== ''
-  const dateValid = dateOfVisit !== ''
+  const dateInRange =
+    dateOfVisit !== '' && dateOfVisit >= minDate && dateOfVisit <= maxDate
   const bagValid = total > 0 || nilReturn
   const birdsBudgetOk =
     nilReturn || birdsRemaining == null || total <= birdsRemaining
   const formValid =
-    !seasonClosed && membershipValid && dateValid && bagValid && birdsBudgetOk
+    !seasonClosed && membershipValid && dateInRange && bagValid && birdsBudgetOk
+
+  /** Re-check season and species limits against fresh totals just before
+   *  inserting — the totals on screen may be minutes or days old. Returns an
+   *  error message, or null when the bag still fits (or can't be verified,
+   *  in which case the insert itself will surface any connection problem). */
+  const recheckLimits = async (): Promise<string | null> => {
+    let fresh
+    try {
+      fresh = await fetchSeasonTotals(seasonName)
+    } catch {
+      return null
+    }
+    if (season.max_visits != null && fresh.returns >= season.max_visits) {
+      return `The ${season.name} season has reached its visit limit (${season.max_visits}).`
+    }
+    if (!nilReturn) {
+      if (
+        season.max_total_birds != null &&
+        fresh.total_birds + total > season.max_total_birds
+      ) {
+        const left = Math.max(0, season.max_total_birds - fresh.total_birds)
+        return `Only ${left} more bird${left === 1 ? '' : 's'} can be logged for the ${season.name} season.`
+      }
+      for (const s of SPECIES) {
+        const cap = limits[s.key]
+        if (cap != null && fresh[s.key] + counts[s.key] > cap) {
+          const left = Math.max(0, cap - fresh[s.key])
+          return `Only ${left} more ${s.label} can be logged for the ${season.name} season.`
+        }
+      }
+    }
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,19 +171,28 @@ export function SubmitScreen() {
     setStatus('saving')
     setErrorMsg('')
 
-    const { error } = await supabase.from('bag_returns').insert({
-      membership_number: membership.trim(),
-      date_of_visit: dateOfVisit,
-      location,
-      ...counts,
-      nil_return: nilReturn,
-      notes: notes.trim() || null,
-      // season is set by the DB trigger from date_of_visit
-    })
-
-    if (error) {
+    const limitProblem = await recheckLimits()
+    if (limitProblem) {
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(limitProblem)
+      reloadTotals()
+      return
+    }
+
+    try {
+      const { error } = await supabase.from('bag_returns').insert({
+        membership_number: normalizeMembership(membership),
+        date_of_visit: dateOfVisit,
+        location,
+        ...counts,
+        nil_return: nilReturn,
+        notes: notes.trim() || null,
+        // season is set by the DB trigger from date_of_visit
+      })
+      if (error) throw new Error(error.message)
+    } catch (e) {
+      setStatus('error')
+      setErrorMsg(friendlyError(thrownMessage(e)))
       return
     }
 
@@ -136,7 +204,7 @@ export function SubmitScreen() {
     setNilReturn(false)
     setNotes('')
     reloadTotals()
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToTop()
   }
 
   return (
@@ -149,6 +217,18 @@ export function SubmitScreen() {
         </p>
       </header>
 
+      {loadError && (
+        <div className="banner banner-warn" role="status">
+          Season settings couldn’t be loaded — showing defaults. Check your
+          connection and reload before submitting.
+        </div>
+      )}
+      {!loadError && totalsError && (
+        <div className="banner banner-warn" role="status">
+          Season totals couldn’t be loaded, so remaining limits shown may be out
+          of date. Limits are checked again when you submit.
+        </div>
+      )}
       {seasonClosed && (
         <div className="banner banner-error" role="alert">
           {visitsReached
@@ -184,8 +264,10 @@ export function SubmitScreen() {
                 Please enter your membership number.
               </span>
             )}
-            {memberName(membership.trim()) && (
-              <span className="field-hint">{memberName(membership.trim())}</span>
+            {memberName(normalizeMembership(membership)) && (
+              <span className="field-hint">
+                {memberName(normalizeMembership(membership))}
+              </span>
             )}
           </label>
           <label className="field">
@@ -195,14 +277,23 @@ export function SubmitScreen() {
               type="date"
               value={dateOfVisit}
               min={minDate}
+              max={maxDate}
               onChange={(e) => {
                 setDateOfVisit(e.target.value)
                 if (status !== 'idle') setStatus('idle')
               }}
             />
-            <span className="field-hint">
-              Filed under the {season.name} season.
-            </span>
+            {showErrors && !dateInRange ? (
+              <span className="field-error">
+                {dateOfVisit === ''
+                  ? 'Please enter the date of your visit.'
+                  : `Visit dates must fall between ${formatDate(minDate)} and ${formatDate(maxDate)}.`}
+              </span>
+            ) : (
+              <span className="field-hint">
+                Filed under the {season.name} season.
+              </span>
+            )}
           </label>
         </section>
 

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useSeasonTotals } from '../lib/useSeasonTotals'
 import { useBagReturns } from '../lib/useBagReturns'
 import { SPECIES, type SpeciesKey } from '../data/species'
-import { captionFromDates, monthsBetween } from '../lib/season'
+import { captionFromDates, monthsBetween, todayISO } from '../lib/season'
 import { rowsToCsv, downloadCsv } from '../lib/csv'
 import type { LocationName, SeasonConfig } from '../types'
 
@@ -100,7 +100,7 @@ export function AdminOverview({
   }
 
   const exportCsv = () => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayISO()
     const rows: (string | number | null)[][] = [
       ['Grange & District Wildfowlers — Season Report'],
       [`Season ${season.name}`],

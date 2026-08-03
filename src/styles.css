@@ -1,17 +1,81 @@
 :root {
+  color-scheme: light dark;
+
   --bg: #eef1ec;
   --card: #ffffff;
   --ink: #1b241f;
-  --muted: #6c7a72;
+  --muted: #5b6962;
   --line: #e3e8e2;
-  --brand: #2e6b4f;
-  --brand-dark: #235740;
+  --brand: #2e6b4f; /* solid fills: buttons, bars, active pills (white text) */
+  --brand-text: #2e6b4f; /* brand-colored text on bg/card */
+  --brand-dark: #235740; /* accent text: titles, totals */
   --brand-tint: #e7f0ea;
-  --danger: #b23b2e;
+  --focus: #2e6b4f;
+  --danger: #b23b2e; /* solid fills: badges, bars, delete button (white text) */
+  --danger-text: #b23b2e;
+  --danger-line: #e7c4bf;
+  --danger-tint: #fbeeec;
+  --control-bg: #ffffff; /* inputs, stepper buttons, active segment */
+  --track-off: #cfd6d0; /* switch off-track, unlimited bar */
+  --disabled-bg: #e3e7e1;
+  --item-active: #f7faf8;
+  --secondary-active: #d9e8df;
+  --chevron: #b9c2bb;
+  --banner-ok-line: #cfe3d6;
+  --banner-err-bg: #fbe9e7;
+  --banner-err-ink: #8a2f24;
+  --banner-err-line: #f3cdc7;
+  --banner-warn-bg: #fdf0dc;
+  --banner-warn-ink: #8a5a16;
+  --banner-warn-line: #f3dcb4;
+  --pill-cat-bg: #fdeee3;
+  --pill-cat-ink: #9a4a1e;
+  --season-warn-bg: #fff4e0;
+  --season-warn-ink: #6f4a07;
+  --amber: #e0a106;
+  --bar-alt: #6a9d80;
+  --tabbar-bg: rgba(255, 255, 255, 0.96);
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: 0 1px 2px rgba(20, 40, 30, 0.06), 0 1px 3px rgba(20, 40, 30, 0.05);
   --tab-h: 64px;
+}
+
+/* Marsh-green dark theme; every pair verified ≥ 4.5:1 (focus ≥ 3:1). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141a17;
+    --card: #1d2521;
+    --ink: #e4ebe6;
+    --muted: #a6b8ad;
+    --line: #2e3833;
+    --brand-text: #8ecfae;
+    --brand-dark: #9ed4b8;
+    --brand-tint: #23312a;
+    --focus: #6fbf97;
+    --danger-text: #f0917f;
+    --danger-line: #5a322b;
+    --danger-tint: #33211d;
+    --control-bg: #232c27;
+    --track-off: #3a463f;
+    --disabled-bg: #222a25;
+    --item-active: #232c27;
+    --secondary-active: #2b3a32;
+    --chevron: #55645c;
+    --banner-ok-line: #2e4238;
+    --banner-err-bg: #38201c;
+    --banner-err-ink: #f2a596;
+    --banner-err-line: #59322c;
+    --banner-warn-bg: #362a12;
+    --banner-warn-ink: #e5bd6f;
+    --banner-warn-line: #55431f;
+    --pill-cat-bg: #362317;
+    --pill-cat-ink: #eb9a63;
+    --season-warn-bg: #33290f;
+    --season-warn-ink: #eac36d;
+    --tabbar-bg: rgba(24, 30, 27, 0.96);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
 }
 
 * {
@@ -52,7 +116,14 @@ select {
 
 button:focus-visible,
 .input:focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The real checkbox inside the nil-return switch is invisible — draw its
+   keyboard focus on the track instead. */
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -137,13 +208,13 @@ button:focus-visible,
 .banner-success {
   background: var(--brand-tint);
   color: var(--brand-dark);
-  border: 1px solid #cfe3d6;
+  border: 1px solid var(--banner-ok-line);
 }
 
 .banner-error {
-  background: #fbe9e7;
-  color: #8a2f24;
-  border: 1px solid #f3cdc7;
+  background: var(--banner-err-bg);
+  color: var(--banner-err-ink);
+  border: 1px solid var(--banner-err-line);
 }
 
 /* ---- Cards ---- */
@@ -203,7 +274,7 @@ button:focus-visible,
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
-  background: #fff;
+  background: var(--control-bg);
   color: var(--ink);
   appearance: none;
   -webkit-appearance: none;
@@ -232,7 +303,7 @@ button:focus-visible,
 
 .field-error {
   display: block;
-  color: var(--danger);
+  color: var(--danger-text);
   font-size: 13px;
   margin-top: 7px;
   font-weight: 500;
@@ -264,7 +335,7 @@ button:focus-visible,
   flex: 1;
   border: none;
   background: transparent;
-  padding: 11px 12px;
+  padding: 12px;
   border-radius: 9px;
   font-weight: 600;
   color: var(--brand-dark);
@@ -285,7 +356,7 @@ button:focus-visible,
 }
 
 .segment.is-active {
-  background: #fff;
+  background: var(--control-bg);
   box-shadow: var(--shadow);
 }
 
@@ -322,7 +393,7 @@ button:focus-visible,
 }
 
 .stepper-row.is-disabled {
-  background: #e3e7e1;
+  background: var(--disabled-bg);
   border-radius: 6px;
 }
 
@@ -339,11 +410,11 @@ button:focus-visible,
 }
 
 .step-btn {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--control-bg);
   font-size: 22px;
   line-height: 1;
   color: var(--brand-dark);
@@ -406,7 +477,7 @@ button:focus-visible,
 .switch-track {
   position: absolute;
   inset: 0;
-  background: #cfd6d0;
+  background: var(--track-off);
   border-radius: 999px;
   transition: background 0.15s ease;
 }
@@ -488,11 +559,12 @@ button:focus-visible,
 .btn-link {
   background: none;
   border: none;
-  color: var(--brand);
+  color: var(--brand-text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px 6px;
+  margin: -4px 0;
   white-space: nowrap;
 }
 
@@ -560,10 +632,10 @@ button:focus-visible,
 .back-btn {
   background: none;
   border: none;
-  color: var(--brand);
+  color: var(--brand-text);
   font-weight: 600;
   cursor: pointer;
-  padding: 4px 0;
+  padding: 8px 8px 8px 0;
   align-self: flex-start;
 }
 
@@ -667,11 +739,12 @@ button:focus-visible,
   height: 100%;
   background: var(--brand);
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transform-origin: left;
+  animation: grow-x 0.3s ease;
 }
 
 .bar-fill-alt {
-  background: #6a9d80;
+  background: var(--bar-alt);
 }
 
 .bar-value {
@@ -716,7 +789,8 @@ button:focus-visible,
   width: 100%;
   background: var(--brand);
   border-radius: 6px 6px 0 0;
-  transition: height 0.3s ease;
+  transform-origin: bottom;
+  animation: grow-y 0.3s ease;
 }
 
 .month-label {
@@ -781,7 +855,7 @@ button:focus-visible,
 }
 
 .return-item:active {
-  background: #f7faf8;
+  background: var(--item-active);
 }
 
 .return-main {
@@ -826,7 +900,7 @@ button:focus-visible,
 }
 
 .chevron {
-  color: #b9c2bb;
+  color: var(--chevron);
   font-size: 22px;
   line-height: 1;
 }
@@ -854,8 +928,8 @@ button:focus-visible,
 }
 
 .pill-cat {
-  background: #fdeee3;
-  color: #9a4a1e;
+  background: var(--pill-cat-bg);
+  color: var(--pill-cat-ink);
 }
 
 .issue-date {
@@ -868,6 +942,7 @@ button:focus-visible,
   font-size: 15px;
   line-height: 1.5;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .issue-foot {
@@ -916,6 +991,7 @@ button:focus-visible,
 
 .notes-text {
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-size: 15px;
 }
 
@@ -935,7 +1011,7 @@ button:focus-visible,
 }
 
 .state-error {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 /* ---- Bottom tab bar ---- */
@@ -946,7 +1022,7 @@ button:focus-visible,
   right: 0;
   display: flex;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--tabbar-bg);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--line);
@@ -993,9 +1069,9 @@ button:focus-visible,
 
 /* ---- Warn banner (approaching limits) ---- */
 .banner-warn {
-  background: #fdf0dc;
-  color: #8a5a16;
-  border: 1px solid #f3dcb4;
+  background: var(--banner-warn-bg);
+  color: var(--banner-warn-ink);
+  border: 1px solid var(--banner-warn-line);
 }
 
 /* ---- Limit status bars (admin overview) ---- */
@@ -1030,7 +1106,7 @@ button:focus-visible,
 .limit-track {
   display: block;
   height: 10px;
-  background: #eef1ec;
+  background: var(--bg);
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1039,20 +1115,21 @@ button:focus-visible,
   display: block;
   height: 100%;
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transform-origin: left;
+  animation: grow-x 0.3s ease;
 }
 
 .limit-fill.is-ok {
   background: var(--brand);
 }
 .limit-fill.is-approaching {
-  background: #e0a106;
+  background: var(--amber);
 }
 .limit-fill.is-reached {
   background: var(--danger);
 }
 .limit-fill.is-none {
-  background: #cfd6d0;
+  background: var(--track-off);
 }
 
 /* ---- Settings ---- */
@@ -1105,7 +1182,7 @@ button:focus-visible,
   color: var(--brand-dark);
 }
 .btn-secondary:active {
-  background: #d9e8df;
+  background: var(--secondary-active);
 }
 
 .btn-danger {
@@ -1117,12 +1194,12 @@ button:focus-visible,
 }
 
 .btn-danger-outline {
-  background: #fff;
-  color: var(--danger);
-  border: 1px solid #e7c4bf;
+  background: var(--control-bg);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-line);
 }
 .btn-danger-outline:active {
-  background: #fbeeec;
+  background: var(--danger-tint);
 }
 
 /* ---- Season picker (admin) ---- */
@@ -1232,11 +1309,11 @@ button:focus-visible,
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  background: #fff4e0;
-  border: 2px solid #e0a106;
+  background: var(--season-warn-bg);
+  border: 2px solid var(--amber);
   border-radius: var(--radius);
   padding: 14px 16px;
-  color: #6f4a07;
+  color: var(--season-warn-ink);
 }
 
 .season-warning-icon {
@@ -1286,14 +1363,14 @@ button:focus-visible,
 }
 
 .lb-sort {
-  cursor: pointer;
+  padding: 0;
   user-select: none;
 }
 
 .lb-member {
   position: sticky;
   left: 0;
-  background: #fff;
+  background: var(--card);
   text-align: left;
   font-weight: 600;
   z-index: 1;
@@ -1392,4 +1469,68 @@ button:focus-visible,
 
 .chip:active {
   background: var(--brand-tint);
+}
+
+.lb-sort-btn {
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: inherit;
+  text-align: right;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ---- Utilities ---- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Motion ---- */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* Targeted, not a global kill: charts render at their final size instantly,
+   the switch still changes state, banners stay. */
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill,
+  .month-bar,
+  .limit-fill {
+    animation: none;
+  }
+
+  .switch-track,
+  .switch-thumb {
+    transition: none;
+  }
+}
+
+/* Dark-mode odds and ends the tokens can't reach. */
+@media (prefers-color-scheme: dark) {
+  .select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' fill='none' stroke='%23a6b8ad' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  }
+
+  .input:focus {
+    box-shadow: 0 0 0 3px rgba(111, 191, 151, 0.25);
+  }
 }

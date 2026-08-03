@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, thrownMessage } from './supabase'
 import type { BagReturn } from '../types'
 
 export type LoadState = 'loading' | 'ready' | 'error'
@@ -13,18 +13,19 @@ export function useBagReturns(season?: string) {
   const reload = useCallback(async () => {
     setState('loading')
     setError('')
-    let query = supabase.from('bag_returns').select('*')
-    if (season) query = query.eq('season', season)
-    const { data, error } = await query
-      .order('date_of_visit', { ascending: false })
-      .order('submitted_at', { ascending: false })
-    if (error) {
-      setError(error.message)
+    try {
+      let query = supabase.from('bag_returns').select('*')
+      if (season) query = query.eq('season', season)
+      const { data, error } = await query
+        .order('date_of_visit', { ascending: false })
+        .order('submitted_at', { ascending: false })
+      if (error) throw new Error(error.message)
+      setData((data ?? []) as BagReturn[])
+      setState('ready')
+    } catch (e) {
+      setError(thrownMessage(e))
       setState('error')
-      return
     }
-    setData((data ?? []) as BagReturn[])
-    setState('ready')
   }, [season])
 
   useEffect(() => {

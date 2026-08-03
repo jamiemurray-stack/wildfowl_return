@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, thrownMessage } from '../lib/supabase'
 import {
   SPECIES,
   zeroCounts,
@@ -9,6 +9,7 @@ import {
 } from '../data/species'
 import { Stepper } from './Stepper'
 import { Segmented } from './Segmented'
+import { normalizeMembership } from '../lib/membership'
 import type { BagReturn, LocationName } from '../types'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
@@ -34,9 +35,15 @@ export function EditReturn({
   const [notes, setNotes] = useState(record.notes ?? '')
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [showErrors, setShowErrors] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const total = sumCounts(counts)
+
+  const membershipValid = membership.trim() !== ''
+  const dateValid = dateOfVisit !== ''
+  const bagValid = total > 0 || nilReturn
+  const formValid = membershipValid && dateValid && bagValid
 
   const setCount = (key: SpeciesKey, value: number) => {
     setCounts((c) => ({ ...c, [key]: value }))
@@ -50,22 +57,28 @@ export function EditReturn({
     })
 
   const save = async () => {
+    if (!formValid) {
+      setShowErrors(true)
+      return
+    }
     setStatus('saving')
     setErrorMsg('')
-    const { error } = await supabase
-      .from('bag_returns')
-      .update({
-        membership_number: membership.trim(),
-        date_of_visit: dateOfVisit,
-        location,
-        ...counts,
-        nil_return: nilReturn,
-        notes: notes.trim() || null,
-      })
-      .eq('id', record.id)
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from('bag_returns')
+        .update({
+          membership_number: normalizeMembership(membership),
+          date_of_visit: dateOfVisit,
+          location,
+          ...counts,
+          nil_return: nilReturn,
+          notes: notes.trim() || null,
+        })
+        .eq('id', record.id)
+      if (error) throw new Error(error.message)
+    } catch (e) {
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(thrownMessage(e))
       return
     }
     onDone()
@@ -74,10 +87,15 @@ export function EditReturn({
   const remove = async () => {
     setStatus('saving')
     setErrorMsg('')
-    const { error } = await supabase.from('bag_returns').delete().eq('id', record.id)
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from('bag_returns')
+        .delete()
+        .eq('id', record.id)
+      if (error) throw new Error(error.message)
+    } catch (e) {
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(thrownMessage(e))
       return
     }
     onDone()
@@ -106,6 +124,11 @@ export function EditReturn({
             value={membership}
             onChange={(e) => setMembership(e.target.value)}
           />
+          {showErrors && !membershipValid && (
+            <span className="field-error">
+              Please enter the member’s membership number.
+            </span>
+          )}
         </label>
         <label className="field">
           <span className="field-label">Date of Visit</span>
@@ -115,9 +138,13 @@ export function EditReturn({
             value={dateOfVisit}
             onChange={(e) => setDateOfVisit(e.target.value)}
           />
-          <span className="field-hint">
-            Changing the date may move this return to another season.
-          </span>
+          {showErrors && !dateValid ? (
+            <span className="field-error">Please enter the date of the visit.</span>
+          ) : (
+            <span className="field-hint">
+              Changing the date may move this return to another season.
+            </span>
+          )}
         </label>
         <div className="field">
           <span className="field-label">Location</span>
@@ -161,6 +188,11 @@ export function EditReturn({
           <span className="total-label">Total shot</span>
           <span className="total-value">{nilReturn ? 0 : total}</span>
         </div>
+        {showErrors && !bagValid && (
+          <p className="field-error">
+            Add at least one bird, or switch on “Nil return”.
+          </p>
+        )}
       </section>
 
       <section className="card">

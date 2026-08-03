@@ -13,3 +13,10 @@ const SUPABASE_ANON_KEY =
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: false },
 })
+
+/** Message for an exception thrown by a query — a hard network failure
+ *  rejects the fetch itself rather than returning an { error } result, and an
+ *  unguarded `await` would leave the UI stuck on "Saving…". */
+export function thrownMessage(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
