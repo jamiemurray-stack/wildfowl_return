@@ -168,7 +168,7 @@ function ReturnDetail({
       <section className="card">
         <h2 className="card-title">Bag</h2>
         {record.nil_return ? (
-          <p className="nil-note">Nil return — shot nothing.</p>
+          <p className="nil-note">Nil return - shot nothing.</p>
         ) : (
           <ul className="table">
             {SPECIES.map((s) => (

@@ -7,7 +7,8 @@ export function Segmented<T extends string>({
   grid = false,
 }: {
   options: readonly T[]
-  value: T
+  /** null = nothing chosen yet (the caller decides whether that's valid). */
+  value: T | null
   onChange: (value: T) => void
   ariaLabel?: string
   badges?: Partial<Record<T, number>>

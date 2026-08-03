@@ -61,8 +61,8 @@ export function SettingsView({
     setCopyStatus('idle')
   }, [limits])
 
-  /** A limit box holds a whole number or is blank (no limit). Anything else —
-   *  "1O0", "-5", "ten" — is a typo that must not silently become "no limit". */
+  /** A limit box holds a whole number or is blank (no limit). Anything else -
+   *  "1O0", "-5", "ten" - is a typo that must not silently become "no limit". */
   const parseLimit = (v: string): { ok: boolean; value: number | null } => {
     const t = v.trim()
     if (t === '') return { ok: true, value: null }
@@ -76,7 +76,7 @@ export function SettingsView({
     if (!visits.ok || !birds.ok) {
       setSeasonStatus('error')
       setSeasonErr(
-        `“${!visits.ok ? maxVisits : maxBirds}” isn’t a number — enter a whole number, or clear the box for no limit.`,
+        `“${!visits.ok ? maxVisits : maxBirds}” isn’t a number - enter a whole number, or clear the box for no limit.`,
       )
       return
     }
@@ -112,7 +112,7 @@ export function SettingsView({
       if (!parsed.ok) {
         setLimitsStatus('error')
         setLimitsErr(
-          `“${limitInputs[s.key]}” isn’t a number for ${s.label} — enter a whole number, or clear the box for no limit.`,
+          `“${limitInputs[s.key]}” isn’t a number for ${s.label} - enter a whole number, or clear the box for no limit.`,
         )
         return
       }
@@ -189,7 +189,7 @@ export function SettingsView({
     <div className="screen admin-cols">
       <section className="card">
         <h2 className="card-title">
-          Season — {season.name}
+          Season - {season.name}
           {isActive && <span className="tag-active">active</span>}
         </h2>
         <label className="field">
@@ -226,7 +226,7 @@ export function SettingsView({
             min="0"
             inputMode="numeric"
             value={maxVisits}
-            placeholder="—"
+            placeholder="-"
             onChange={(e) => {
               setMaxVisits(e.target.value)
               setSeasonStatus('idle')
@@ -243,7 +243,7 @@ export function SettingsView({
             min="0"
             inputMode="numeric"
             value={maxBirds}
-            placeholder="—"
+            placeholder="-"
             onChange={(e) => {
               setMaxBirds(e.target.value)
               setSeasonStatus('idle')
@@ -278,7 +278,7 @@ export function SettingsView({
                 type="number"
                 min="0"
                 inputMode="numeric"
-                placeholder="—"
+                placeholder="-"
                 value={limitInputs[s.key] ?? ''}
                 onChange={(e) => {
                   setLimitInputs((p) => ({ ...p, [s.key]: e.target.value }))

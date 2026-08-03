@@ -3,7 +3,7 @@ import { isDateOutsideSeason, formatDate } from '../lib/season'
 
 /**
  * Big, obvious warning shown when today's date falls more than ~3 months outside
- * the active season window — a prompt to check the correct season is selected.
+ * the active season window - a prompt to check the correct season is selected.
  */
 export function SeasonDateNotice() {
   const { activeSeason, loaded } = useSettings()

@@ -54,7 +54,7 @@ export function ReportIssueScreen() {
       setStatus('error')
       setErrorMsg(
         /fetch|network|load failed/i.test(msg)
-          ? 'no connection. Your report is still here — try again when you have signal.'
+          ? 'no connection. Your report is still here - try again when you have signal.'
           : msg,
       )
       return
@@ -79,7 +79,7 @@ export function ReportIssueScreen() {
 
       {status === 'saved' && (
         <div className="banner banner-success" role="status">
-          ✓ Thanks — your report has been sent to the committee.
+          ✓ Thanks - your report has been sent to the committee.
         </div>
       )}
       {status === 'error' && (
@@ -156,6 +156,7 @@ export function ReportIssueScreen() {
             <input
               className="input"
               type="text"
+              inputMode="numeric"
               placeholder="e.g. 27"
               value={membership}
               onChange={(e) => setMembership(e.target.value)}

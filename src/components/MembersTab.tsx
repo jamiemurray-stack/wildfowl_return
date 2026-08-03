@@ -69,6 +69,7 @@ export function MembersTab() {
           <input
             className="input"
             type="text"
+            inputMode="numeric"
             placeholder="e.g. 27"
             value={num}
             onChange={(e) => {
@@ -156,7 +157,7 @@ export function MembersTab() {
 
       {unnamed.length > 0 && (
         <section className="card">
-          <h2 className="card-title">Seen in returns — no name yet</h2>
+          <h2 className="card-title">Seen in returns - no name yet</h2>
           <p className="settings-note">Tap a number to give it a name.</p>
           <div className="chip-row">
             {unnamed.map((n) => (

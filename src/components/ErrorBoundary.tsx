@@ -1,7 +1,7 @@
 import { Component, type ReactNode } from 'react'
 
 /** Last line of defence: without this, any uncaught render error unmounts the
- *  whole tree and leaves a blank white page — the worst outcome for a member
+ *  whole tree and leaves a blank white page - the worst outcome for a member
  *  standing on a marsh. */
 export class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<
           </div>
           <h2 className="gate-title">Something went wrong</h2>
           <p className="gate-text">
-            The app hit an unexpected error. Reloading usually fixes it — nothing
+            The app hit an unexpected error. Reloading usually fixes it - nothing
             you submitted has been lost.
           </p>
           <button

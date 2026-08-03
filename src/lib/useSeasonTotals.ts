@@ -21,7 +21,7 @@ const rowToTotals = (row: Record<string, number>): SeasonTotals => {
   return t
 }
 
-/** One-shot fetch of a season's totals — used to re-check limits at the moment
+/** One-shot fetch of a season's totals - used to re-check limits at the moment
  *  of submission. Throws on query failure so callers can tell "no returns yet"
  *  (zeros) apart from "couldn't check". */
 export async function fetchSeasonTotals(season: string): Promise<SeasonTotals> {
@@ -54,7 +54,7 @@ export function useSeasonTotals(season: string) {
         data ? rowToTotals(data as unknown as Record<string, number>) : zero(),
       )
     } catch (e) {
-      // Keep whatever we last knew rather than pretending the season is empty —
+      // Keep whatever we last knew rather than pretending the season is empty -
       // zeroed totals would silently reopen every limit.
       setError(thrownMessage(e))
     }
