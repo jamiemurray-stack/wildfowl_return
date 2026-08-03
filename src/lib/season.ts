@@ -44,17 +44,20 @@ export function previousSeasonName(name: string): string {
   return `${startYear - 1}/${String(startYear % 100).padStart(2, '0')}`
 }
 
-/** The natural season for a date — shooting seasons run autumn → winter, so
- *  Sep–Dec belong to {year}/{year+1} and Jan–Aug to {year-1}/{year}. */
+/** The natural season for a date — shooting seasons run autumn → winter, and
+ *  the 3-month pre-season lead-in counts towards the coming season, so
+ *  Jun–Dec belong to {year}/{year+1} and Jan–May to {year-1}/{year}. */
 export function seasonNameForDate(iso: string): string {
   const y = parseInt(iso.slice(0, 4), 10)
   const m = parseInt(iso.slice(5, 7), 10)
-  const startYear = m >= 9 ? y : y - 1
+  const startYear = m >= 6 ? y : y - 1
   return `${startYear}/${String((startYear + 1) % 100).padStart(2, '0')}`
 }
 
 /** Resolve the season a visit date belongs to: an existing season whose date
- *  window contains the date, otherwise the natural season for that date. */
+ *  window contains the date; else a season starting within the next 3 months
+ *  (the pre-season lead-in files forward to the coming season); else the
+ *  natural season for the date. Mirrors the DB filing trigger — keep in sync. */
 export function resolveSeasonName(
   iso: string,
   seasons: { name: string; start_date: string; end_date: string }[],
@@ -62,7 +65,12 @@ export function resolveSeasonName(
   const matches = seasons
     .filter((s) => iso >= s.start_date && iso <= s.end_date)
     .sort((a, b) => (a.start_date < b.start_date ? 1 : -1))
-  return matches[0]?.name ?? seasonNameForDate(iso)
+  if (matches[0]) return matches[0].name
+  const horizon = addMonths(iso, 3)
+  const upcoming = seasons
+    .filter((s) => s.start_date > iso && s.start_date <= horizon)
+    .sort((a, b) => (a.start_date < b.start_date ? -1 : 1))
+  return upcoming[0]?.name ?? seasonNameForDate(iso)
 }
 
 export function defaultSeasonDates(name: string): {

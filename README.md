@@ -58,9 +58,13 @@ always computed by the database and can't drift from the species counts.
   blank = no limit).
 - **`app_settings`** — singleton pointer to the `current_season`.
 - `bag_returns.season` tags every return with its season. A DB trigger derives it
-  from the **visit date** (the season whose date window contains it, else the
-  natural autumn→winter season) on every insert and edit, so a return can't be
-  filed against the wrong season regardless of which season is active.
+  from the **visit date** on every insert and edit, so a return can't be filed
+  against the wrong season regardless of which season is active. Resolution
+  order: the season whose date window contains the date; else a season starting
+  within the next 3 months (the pre-season lead-in files forward to the coming
+  season); else the natural autumn→winter season (Jun–Dec → that autumn's
+  season, Jan–May → the previous one). `resolveSeasonName` in
+  `src/lib/season.ts` mirrors this logic for the Submit form — keep both in sync.
 
 A `species_season_totals` view aggregates per-season totals (visits, total birds
 and each species) and powers the limit checks shown on the Submit form and the
