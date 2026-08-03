@@ -6,7 +6,10 @@ type Cell = string | number | null | undefined
 const BOM = '﻿'
 
 function escapeCell(value: Cell): string {
-  const s = value === null || value === undefined ? '' : String(value)
+  let s = value === null || value === undefined ? '' : String(value)
+  // Member-supplied text starting with = + - @ would run as a formula when the
+  // admin opens the export in Excel; a leading apostrophe forces it to text.
+  if (typeof value === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 

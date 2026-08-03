@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { supabase } from './supabase'
+import { supabase, thrownMessage } from './supabase'
 import { SPECIES, type SpeciesKey } from '../data/species'
 import { DEFAULT_SEASON, defaultSeasonDates, nextSeasonName } from './season'
 import type { SeasonConfig } from '../types'
@@ -30,6 +30,9 @@ type SeasonPatch = Partial<
 
 type SettingsValue = {
   loaded: boolean
+  /** Non-empty when the initial settings load failed — season dates and limits
+   *  shown to the user are fallbacks, not club configuration. */
+  loadError: string
   activeName: string
   seasons: SeasonConfig[]
   activeSeason: SeasonConfig
@@ -59,6 +62,7 @@ const SettingsContext = createContext<SettingsValue | null>(null)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [activeName, setActiveName] = useState(DEFAULT_SEASON)
   const [seasons, setSeasons] = useState<SeasonConfig[]>([
     fallbackSeason(DEFAULT_SEASON),
@@ -67,15 +71,41 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [members, setMembers] = useState<Record<string, string>>({})
 
   const load = useCallback(async () => {
-    const { data: settings } = await supabase
-      .from('app_settings')
-      .select('current_season')
-      .eq('id', 1)
-      .maybeSingle()
-    const name = settings?.current_season ?? DEFAULT_SEASON
+    const problems: string[] = []
+    try {
+      await loadInner(problems)
+    } catch (e) {
+      // A hard network failure rejects the fetch itself; without this catch the
+      // whole load dies silently and the app never learns it's on fallbacks.
+      problems.push(thrownMessage(e))
+    }
+    setLoadError(problems[0] ?? '')
+    setLoaded(true)
+  }, [])
 
-    const { data: seasonRows } = await supabase.from('seasons').select('*')
-    let list: SeasonConfig[] = (seasonRows ?? []).map((r) => ({
+  const loadInner = async (problems: string[]) => {
+    // The five reads are independent — run them together so one load is one
+    // round-trip, and a dead network settles in one retry cycle, not five.
+    const [settingsRes, seasonsRes, dataSeasonsRes, limitsRes, membersRes] =
+      await Promise.all([
+        supabase
+          .from('app_settings')
+          .select('current_season')
+          .eq('id', 1)
+          .maybeSingle(),
+        supabase.from('seasons').select('*'),
+        supabase.from('species_season_totals').select('season'),
+        supabase.from('species_limits').select('season, species, limit_value'),
+        // Optional membership_number → name directory (table may not exist
+        // yet) — its absence is not a load failure.
+        supabase.from('members').select('membership_number, name'),
+      ])
+
+    if (settingsRes.error) problems.push(settingsRes.error.message)
+    const name = settingsRes.data?.current_season ?? DEFAULT_SEASON
+
+    if (seasonsRes.error) problems.push(seasonsRes.error.message)
+    let list: SeasonConfig[] = (seasonsRes.data ?? []).map((r) => ({
       name: r.name,
       start_date: r.start_date,
       end_date: r.end_date,
@@ -83,8 +113,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       max_total_birds: r.max_total_birds,
     }))
 
-    // Make sure the active season always exists as a row.
-    if (!list.some((s) => s.name === name)) {
+    // Make sure the active season always exists as a row — but only when the
+    // seasons query actually succeeded; an empty list from a failed read must
+    // not trigger a write.
+    if (!seasonsRes.error && !list.some((s) => s.name === name)) {
       const dates = defaultSeasonDates(name)
       await supabase.from('seasons').insert({ name, ...dates })
       list.push({ name, ...dates, max_visits: null, max_total_birds: null })
@@ -92,10 +124,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     // Surface any season that has returns but no config row, so it's visible
     // in the admin even if the row was never created.
-    const { data: dataSeasons } = await supabase
-      .from('species_season_totals')
-      .select('season')
-    for (const r of dataSeasons ?? []) {
+    for (const r of dataSeasonsRes.data ?? []) {
       if (r.season && !list.some((s) => s.name === r.season)) {
         list.push({
           name: r.season,
@@ -110,12 +139,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSeasons(list)
     setActiveName(name)
 
-    const { data: limitRows } = await supabase
-      .from('species_limits')
-      .select('season, species, limit_value')
+    if (limitsRes.error) problems.push(limitsRes.error.message)
     const map: Record<string, Limits> = {}
     for (const s of list) map[s.name] = emptyLimits()
-    for (const r of limitRows ?? []) {
+    for (const r of limitsRes.data ?? []) {
       if (!map[r.season]) map[r.season] = emptyLimits()
       if (r.species in map[r.season]) {
         map[r.season][r.species as SpeciesKey] = r.limit_value
@@ -123,16 +150,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
     setLimitsBySeason(map)
 
-    // Optional membership_number → name directory (table may not exist yet).
-    const { data: memberRows } = await supabase
-      .from('members')
-      .select('membership_number, name')
     const mmap: Record<string, string> = {}
-    for (const r of memberRows ?? []) mmap[r.membership_number] = r.name
+    for (const r of membersRes.data ?? []) mmap[r.membership_number] = r.name
     setMembers(mmap)
-
-    setLoaded(true)
-  }, [])
+  }
 
   useEffect(() => {
     load()
@@ -158,11 +179,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   )
   const setMember = useCallback(
     async (num: string, name: string): Promise<string | null> => {
-      const { error } = await supabase.from('members').upsert(
-        { membership_number: num, name, updated_at: new Date().toISOString() },
-        { onConflict: 'membership_number' },
-      )
-      if (error) return error.message
+      try {
+        const { error } = await supabase.from('members').upsert(
+          { membership_number: num, name, updated_at: new Date().toISOString() },
+          { onConflict: 'membership_number' },
+        )
+        if (error) return error.message
+      } catch (e) {
+        return thrownMessage(e)
+      }
       setMembers((prev) => ({ ...prev, [num]: name }))
       return null
     },
@@ -170,11 +195,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   )
   const removeMember = useCallback(
     async (num: string): Promise<string | null> => {
-      const { error } = await supabase
-        .from('members')
-        .delete()
-        .eq('membership_number', num)
-      if (error) return error.message
+      try {
+        const { error } = await supabase
+          .from('members')
+          .delete()
+          .eq('membership_number', num)
+        if (error) return error.message
+      } catch (e) {
+        return thrownMessage(e)
+      }
       setMembers((prev) => {
         const next = { ...prev }
         delete next[num]
@@ -187,8 +216,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const setSeasonConfig = useCallback(
     async (name: string, patch: SeasonPatch): Promise<string | null> => {
-      const { error } = await supabase.from('seasons').update(patch).eq('name', name)
-      if (error) return error.message
+      try {
+        const { error } = await supabase
+          .from('seasons')
+          .update(patch)
+          .eq('name', name)
+        if (error) return error.message
+      } catch (e) {
+        return thrownMessage(e)
+      }
       setSeasons((prev) => prev.map((s) => (s.name === name ? { ...s, ...patch } : s)))
       return null
     },
@@ -201,16 +237,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       species: SpeciesKey,
       value: number | null,
     ): Promise<string | null> => {
-      const { error } = await supabase.from('species_limits').upsert(
-        {
-          season: name,
-          species,
-          limit_value: value,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'season,species' },
-      )
-      if (error) return error.message
+      try {
+        const { error } = await supabase.from('species_limits').upsert(
+          {
+            season: name,
+            species,
+            limit_value: value,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'season,species' },
+        )
+        if (error) return error.message
+      } catch (e) {
+        return thrownMessage(e)
+      }
       setLimitsBySeason((prev) => ({
         ...prev,
         [name]: { ...(prev[name] ?? emptyLimits()), [species]: value },
@@ -222,11 +262,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const setActiveSeason = useCallback(
     async (name: string): Promise<string | null> => {
-      const { error } = await supabase
-        .from('app_settings')
-        .update({ current_season: name, updated_at: new Date().toISOString() })
-        .eq('id', 1)
-      if (error) return error.message
+      try {
+        const { error } = await supabase
+          .from('app_settings')
+          .update({ current_season: name, updated_at: new Date().toISOString() })
+          .eq('id', 1)
+        if (error) return error.message
+      } catch (e) {
+        return thrownMessage(e)
+      }
       setActiveName(name)
       return null
     },
@@ -243,28 +287,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const newName = nextSeasonName(latest.name)
     const dates = defaultSeasonDates(newName)
 
-    const { error: insErr } = await supabase.from('seasons').upsert(
-      {
-        name: newName,
-        ...dates,
-        max_visits: latest.max_visits,
-        max_total_birds: latest.max_total_birds,
-      },
-      { onConflict: 'name' },
-    )
-    if (insErr) return insErr.message
+    try {
+      const { error: insErr } = await supabase.from('seasons').upsert(
+        {
+          name: newName,
+          ...dates,
+          max_visits: latest.max_visits,
+          max_total_birds: latest.max_total_birds,
+        },
+        { onConflict: 'name' },
+      )
+      if (insErr) return insErr.message
 
-    const latestLims = limitsBySeason[latest.name] ?? emptyLimits()
-    const rows = SPECIES.filter((s) => latestLims[s.key] != null).map((s) => ({
-      season: newName,
-      species: s.key,
-      limit_value: latestLims[s.key],
-    }))
-    if (rows.length) {
-      const { error: limErr } = await supabase
-        .from('species_limits')
-        .upsert(rows, { onConflict: 'season,species' })
-      if (limErr) return limErr.message
+      const latestLims = limitsBySeason[latest.name] ?? emptyLimits()
+      const rows = SPECIES.filter((s) => latestLims[s.key] != null).map((s) => ({
+        season: newName,
+        species: s.key,
+        limit_value: latestLims[s.key],
+      }))
+      if (rows.length) {
+        const { error: limErr } = await supabase
+          .from('species_limits')
+          .upsert(rows, { onConflict: 'season,species' })
+        if (limErr) return limErr.message
+      }
+    } catch (e) {
+      return thrownMessage(e)
     }
 
     await load()
@@ -274,6 +322,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SettingsValue>(
     () => ({
       loaded,
+      loadError,
       activeName,
       seasons,
       activeSeason: seasonFor(activeName),
@@ -293,6 +342,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }),
     [
       loaded,
+      loadError,
       activeName,
       seasons,
       seasonFor,

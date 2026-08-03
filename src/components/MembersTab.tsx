@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useSettings } from '../lib/useSettings'
 import { useBagReturns } from '../lib/useBagReturns'
+import { normalizeMembership } from '../lib/membership'
+import { scrollToTop } from '../lib/scroll'
 
 type Saved = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -22,7 +24,7 @@ export function MembersTab() {
   }, [data, members])
 
   const save = async () => {
-    const n = num.trim()
+    const n = normalizeMembership(num)
     const nm = name.trim()
     if (!n || !nm) {
       setStatus('error')
@@ -46,7 +48,7 @@ export function MembersTab() {
     setNum(n)
     setName(members[n] ?? '')
     setStatus('idle')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToTop()
   }
 
   const remove = async (n: string) => {
@@ -166,7 +168,7 @@ export function MembersTab() {
                   setNum(n)
                   setName('')
                   setStatus('idle')
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  scrollToTop()
                 }}
               >
                 {n}

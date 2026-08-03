@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useBagReturns } from '../lib/useBagReturns'
 import { useSettings } from '../lib/useSettings'
 import { SPECIES, type SpeciesKey } from '../data/species'
@@ -88,6 +88,24 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
   }
 
   const arrow = (k: SortKey) => (sortKey === k ? (asc ? ' ▲' : ' ▼') : '')
+  const ariaSort = (k: SortKey) =>
+    sortKey === k ? (asc ? ('ascending' as const) : ('descending' as const)) : undefined
+
+  // A plain render helper, not a nested component — a component defined inside
+  // render remounts on every render and drops keyboard focus mid-sort.
+  const sortHeader = (k: SortKey, label: ReactNode, className?: string) => (
+    <th
+      key={typeof k === 'string' ? k : undefined}
+      scope="col"
+      aria-sort={ariaSort(k)}
+      className={`lb-num lb-sort${className ? ` ${className}` : ''}`}
+    >
+      <button type="button" className="lb-sort-btn" onClick={() => setSort(k)}>
+        {label}
+        {arrow(k)}
+      </button>
+    </th>
+  )
 
   const exportCsv = () => {
     const headers = [
@@ -156,34 +174,19 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
         <div className="card lb-card">
           <div className="lb-scroll">
             <table className="lb-table">
+              <caption className="visually-hidden">
+                {season.name} leaderboard — birds per member by species, sortable
+                by each column
+              </caption>
               <thead>
                 <tr>
-                  <th className="lb-member">Member</th>
-                  {SPECIES.map((s) => (
-                    <th
-                      key={s.key}
-                      className="lb-num lb-sort"
-                      onClick={() => setSort(s.key)}
-                    >
-                      {s.short}
-                      {arrow(s.key)}
-                    </th>
-                  ))}
-                  <th
-                    className="lb-num lb-sort lb-total-col"
-                    onClick={() => setSort('total')}
-                  >
-                    Total{arrow('total')}
+                  <th scope="col" className="lb-member">
+                    Member
                   </th>
-                  <th className="lb-num lb-sort" onClick={() => setSort('visits')}>
-                    Visits{arrow('visits')}
-                  </th>
-                  <th
-                    className="lb-num lb-sort"
-                    onClick={() => setSort('pervisit')}
-                  >
-                    Birds/visit{arrow('pervisit')}
-                  </th>
+                  {SPECIES.map((s) => sortHeader(s.key, s.short))}
+                  {sortHeader('total', 'Total', 'lb-total-col')}
+                  {sortHeader('visits', 'Visits')}
+                  {sortHeader('pervisit', 'Birds/visit')}
                 </tr>
               </thead>
               <tbody>
