@@ -169,7 +169,7 @@ export function EditReturn({
         </div>
         {isNil && (
           <p className="field-hint nil-hint">
-            No birds entered — saving records this visit as a nil return.
+            No birds entered - saving records this visit as a nil return.
           </p>
         )}
       </section>
@@ -195,7 +195,7 @@ export function EditReturn({
         {status === 'saving'
           ? 'Saving…'
           : isNil
-            ? 'Save as nil return — shot nothing'
+            ? 'Save as nil return - shot nothing'
             : 'Save changes'}
       </button>
 

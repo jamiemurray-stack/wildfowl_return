@@ -19,7 +19,7 @@ export function toCsv(headers: string[], rows: Cell[][]): string {
     .join('\r\n')
 }
 
-/** Build CSV from raw rows (no separate header) — for multi-section reports. */
+/** Build CSV from raw rows (no separate header) - for multi-section reports. */
 export function rowsToCsv(rows: Cell[][]): string {
   return rows.map((row) => row.map(escapeCell).join(',')).join('\r\n')
 }

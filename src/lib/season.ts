@@ -44,7 +44,7 @@ export function previousSeasonName(name: string): string {
   return `${startYear - 1}/${String(startYear % 100).padStart(2, '0')}`
 }
 
-/** The natural season for a date — shooting seasons run autumn → winter, and
+/** The natural season for a date - shooting seasons run autumn → winter, and
  *  the 3-month pre-season lead-in counts towards the coming season, so
  *  Jun–Dec belong to {year}/{year+1} and Jan–May to {year-1}/{year}. */
 export function seasonNameForDate(iso: string): string {
@@ -57,7 +57,7 @@ export function seasonNameForDate(iso: string): string {
 /** Resolve the season a visit date belongs to: an existing season whose date
  *  window contains the date; else a season starting within the next 3 months
  *  (the pre-season lead-in files forward to the coming season); else the
- *  natural season for the date. Mirrors the DB filing trigger — keep in sync. */
+ *  natural season for the date. Mirrors the DB filing trigger - keep in sync. */
 export function resolveSeasonName(
   iso: string,
   seasons: { name: string; start_date: string; end_date: string }[],

@@ -4,7 +4,7 @@ import { SubmitScreen } from './screens/SubmitScreen'
 import { ReportIssueScreen } from './screens/ReportIssueScreen'
 import { SettingsProvider } from './lib/useSettings'
 
-// Most visits only ever submit a return — the whole admin panel loads on demand.
+// Most visits only ever submit a return - the whole admin panel loads on demand.
 const AdminScreen = lazy(() =>
   import('./screens/AdminScreen').then((m) => ({ default: m.AdminScreen })),
 )

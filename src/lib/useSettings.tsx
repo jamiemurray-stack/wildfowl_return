@@ -30,7 +30,7 @@ type SeasonPatch = Partial<
 
 type SettingsValue = {
   loaded: boolean
-  /** Non-empty when the initial settings load failed — season dates and limits
+  /** Non-empty when the initial settings load failed - season dates and limits
    *  shown to the user are fallbacks, not club configuration. */
   loadError: string
   activeName: string
@@ -84,7 +84,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const loadInner = async (problems: string[]) => {
-    // The five reads are independent — run them together so one load is one
+    // The five reads are independent - run them together so one load is one
     // round-trip, and a dead network settles in one retry cycle, not five.
     const [settingsRes, seasonsRes, dataSeasonsRes, limitsRes, membersRes] =
       await Promise.all([
@@ -97,7 +97,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         supabase.from('species_season_totals').select('season'),
         supabase.from('species_limits').select('season, species, limit_value'),
         // Optional membership_number → name directory (table may not exist
-        // yet) — its absence is not a load failure.
+        // yet) - its absence is not a load failure.
         supabase.from('members').select('membership_number, name'),
       ])
 
@@ -113,7 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       max_total_birds: r.max_total_birds,
     }))
 
-    // Make sure the active season always exists as a row — but only when the
+    // Make sure the active season always exists as a row - but only when the
     // seasons query actually succeeded; an empty list from a failed read must
     // not trigger a write.
     if (!seasonsRes.error && !list.some((s) => s.name === name)) {
@@ -279,7 +279,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const addSeason = useCallback(async (): Promise<string | null> => {
     // Add the season after the latest one, carrying its caps + limits over.
-    // Does NOT change the active season — that's a separate, explicit action.
+    // Does NOT change the active season - that's a separate, explicit action.
     const latest =
       seasons.length > 0
         ? seasons.reduce((a, b) => (a.name >= b.name ? a : b))

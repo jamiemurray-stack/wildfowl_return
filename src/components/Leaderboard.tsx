@@ -91,7 +91,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
   const ariaSort = (k: SortKey) =>
     sortKey === k ? (asc ? ('ascending' as const) : ('descending' as const)) : undefined
 
-  // A plain render helper, not a nested component — a component defined inside
+  // A plain render helper, not a nested component - a component defined inside
   // render remounts on every render and drops keyboard focus mid-sort.
   const sortHeader = (k: SortKey, label: ReactNode, className?: string) => (
     <th
@@ -175,7 +175,7 @@ export function Leaderboard({ season }: { season: SeasonConfig }) {
           <div className="lb-scroll">
             <table className="lb-table">
               <caption className="visually-hidden">
-                {season.name} leaderboard — birds per member by species, sortable
+                {season.name} leaderboard - birds per member by species, sortable
                 by each column
               </caption>
               <thead>

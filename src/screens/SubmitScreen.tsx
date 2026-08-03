@@ -30,11 +30,11 @@ import { scrollToTop } from '../lib/scroll'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
-/** Friendly wording for a failed network round-trip — the raw message
+/** Friendly wording for a failed network round-trip - the raw message
  *  ("Failed to fetch") means nothing on a marsh with one bar of signal. */
 const friendlyError = (message: string): string =>
   /fetch|network|load failed/i.test(message)
-    ? 'no connection. Your entries are still here — try again when you have signal.'
+    ? 'no connection. Your entries are still here - try again when you have signal.'
     : message
 
 export function SubmitScreen() {
@@ -42,7 +42,7 @@ export function SubmitScreen() {
     useSettings()
 
   const [membership, setMembership] = useState(getRememberedMembership)
-  // A remembered number is shown as "Submitting as …" instead of an input —
+  // A remembered number is shown as "Submitting as …" instead of an input -
   // returning members read their identity rather than re-typing it.
   const [editingMembership, setEditingMembership] = useState(
     () => getRememberedMembership() === '',
@@ -85,7 +85,7 @@ export function SubmitScreen() {
 
   // Visit dates span the configured seasons: from the earliest season's start
   // to the furthest season's end, so a fat-fingered far-future year is caught.
-  // Today is always allowed — a member logging today's visit must never be
+  // Today is always allowed - a member logging today's visit must never be
   // blocked just because the next season hasn't been configured yet.
   const minDate = seasons.reduce(
     (min, s) => (s.start_date < min ? s.start_date : min),
@@ -97,7 +97,7 @@ export function SubmitScreen() {
   )
 
   const total = sumCounts(counts)
-  // A visit with nothing shot IS the nil return — no separate toggle to find.
+  // A visit with nothing shot IS the nil return - no separate toggle to find.
   // The submit button announces it, so nothing is filed unknowingly.
   const isNil = total === 0
 
@@ -136,7 +136,7 @@ export function SubmitScreen() {
     !seasonClosed && membershipValid && dateInRange && locationValid && birdsBudgetOk
 
   /** Re-check season and species limits against fresh totals just before
-   *  inserting — the totals on screen may be minutes or days old. Returns an
+   *  inserting - the totals on screen may be minutes or days old. Returns an
    *  error message, or null when the bag still fits (or can't be verified,
    *  in which case the insert itself will surface any connection problem). */
   const recheckLimits = async (): Promise<string | null> => {
@@ -231,7 +231,7 @@ export function SubmitScreen() {
 
       {loadError && (
         <div className="banner banner-warn" role="status">
-          Season settings couldn’t be loaded — showing defaults. Check your
+          Season settings couldn’t be loaded - showing defaults. Check your
           connection and reload before submitting.
         </div>
       )}
@@ -406,7 +406,7 @@ export function SubmitScreen() {
           </div>
           {isNil && !seasonClosed && (
             <p className="field-hint nil-hint">
-              Shot nothing? Leave the counts at zero — the button below files it
+              Shot nothing? Leave the counts at zero - the button below files it
               as a nil return.
             </p>
           )}
@@ -445,7 +445,7 @@ export function SubmitScreen() {
             : status === 'saving'
               ? 'Submitting…'
               : isNil
-                ? 'Submit nil return — shot nothing'
+                ? 'Submit nil return - shot nothing'
                 : 'Submit bag return'}
         </button>
       </form>

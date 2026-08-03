@@ -102,7 +102,7 @@ export function AdminOverview({
   const exportCsv = () => {
     const today = todayISO()
     const rows: (string | number | null)[][] = [
-      ['Grange & District Wildfowlers — Season Report'],
+      ['Grange & District Wildfowlers - Season Report'],
       [`Season ${season.name}`],
       [captionFromDates(season.start_date, season.end_date)],
       ['Generated', today],
@@ -151,12 +151,12 @@ export function AdminOverview({
 
       {alerts.reached.length > 0 && (
         <div className="banner banner-error" role="alert">
-          🛑 Limit reached — {alerts.reached.join(', ')}
+          🛑 Limit reached - {alerts.reached.join(', ')}
         </div>
       )}
       {alerts.approaching.length > 0 && (
         <div className="banner banner-warn" role="status">
-          ⚠️ Approaching limit — {alerts.approaching.join(', ')}
+          ⚠️ Approaching limit - {alerts.approaching.join(', ')}
         </div>
       )}
 
@@ -179,7 +179,7 @@ export function AdminOverview({
         <h2 className="card-title">Limit status</h2>
         {limitRows.length === 0 ? (
           <p className="settings-note">
-            No limits set for this season — add them in the Settings tab.
+            No limits set for this season - add them in the Settings tab.
           </p>
         ) : (
           <ul className="limit-list">
