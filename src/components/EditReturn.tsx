@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { supabase, thrownMessage } from '../lib/supabase'
 import {
   SPECIES,
@@ -10,6 +10,7 @@ import {
 import { Stepper } from './Stepper'
 import { Segmented } from './Segmented'
 import { normalizeMembership } from '../lib/membership'
+import { scrollIntoViewGently } from '../lib/scroll'
 import type { BagReturn, LocationName } from '../types'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
@@ -37,6 +38,9 @@ export function EditReturn({
   const [showErrors, setShowErrors] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  const membershipBox = useRef<HTMLElement | null>(null)
+  const dateBox = useRef<HTMLElement | null>(null)
+
   const total = sumCounts(counts)
   // Mirrors the Submit form: zero birds IS the nil return, no toggle.
   const isNil = total === 0
@@ -52,6 +56,11 @@ export function EditReturn({
   const save = async () => {
     if (!formValid) {
       setShowErrors(true)
+      setTimeout(() => {
+        scrollIntoViewGently(
+          !membershipValid ? membershipBox.current : dateBox.current,
+        )
+      }, 50)
       return
     }
     setStatus('saving')
@@ -110,7 +119,12 @@ export function EditReturn({
       )}
 
       <section className="card">
-        <label className="field">
+        <label
+          className="field"
+          ref={(el) => {
+            membershipBox.current = el
+          }}
+        >
           <span className="field-label">Membership Number</span>
           <input
             className="input"
@@ -124,7 +138,12 @@ export function EditReturn({
             </span>
           )}
         </label>
-        <label className="field">
+        <label
+          className="field"
+          ref={(el) => {
+            dateBox.current = el
+          }}
+        >
           <span className="field-label">Date of Visit</span>
           <input
             className="input"
@@ -186,6 +205,12 @@ export function EditReturn({
         />
       </section>
 
+      {showErrors && !formValid && (
+        <p className="field-error submit-summary" role="alert">
+          Something’s missing - the form has moved up to the part that still
+          needs filling in.
+        </p>
+      )}
       <button
         type="button"
         className="btn btn-primary btn-block"

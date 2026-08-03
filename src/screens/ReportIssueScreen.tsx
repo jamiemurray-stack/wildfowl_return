@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase, thrownMessage } from '../lib/supabase'
 import { ISSUE_CATEGORIES, ISSUE_LOCATIONS } from '../data/issues'
 import {
@@ -6,7 +6,7 @@ import {
   rememberMembership,
   normalizeMembership,
 } from '../lib/membership'
-import { scrollToTop } from '../lib/scroll'
+import { scrollToTop, scrollIntoViewGently } from '../lib/scroll'
 
 export function ReportIssueScreen() {
   const [membership, setMembership] = useState(getRememberedMembership)
@@ -19,6 +19,9 @@ export function ReportIssueScreen() {
   )
   const [errorMsg, setErrorMsg] = useState('')
   const [showErrors, setShowErrors] = useState(false)
+
+  const categoryBox = useRef<HTMLElement | null>(null)
+  const descriptionBox = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     rememberMembership(membership)
@@ -36,6 +39,11 @@ export function ReportIssueScreen() {
     e.preventDefault()
     if (!valid) {
       setShowErrors(true)
+      setTimeout(() => {
+        scrollIntoViewGently(
+          !categoryValid ? categoryBox.current : descriptionBox.current,
+        )
+      }, 50)
       return
     }
     setStatus('saving')
@@ -90,7 +98,12 @@ export function ReportIssueScreen() {
 
       <form onSubmit={handleSubmit} noValidate>
         <section className="card">
-          <label className="field">
+          <label
+            className="field"
+            ref={(el) => {
+              categoryBox.current = el
+            }}
+          >
             <span className="field-label">Category</span>
             <select
               className="input select"
@@ -132,7 +145,12 @@ export function ReportIssueScreen() {
         </section>
 
         <section className="card">
-          <label className="field">
+          <label
+            className="field"
+            ref={(el) => {
+              descriptionBox.current = el
+            }}
+          >
             <span className="field-label">What’s the issue?</span>
             <textarea
               className="input textarea"
@@ -164,6 +182,12 @@ export function ReportIssueScreen() {
           </label>
         </section>
 
+        {showErrors && !valid && (
+          <p className="field-error submit-summary" role="alert">
+            Something’s missing - the form has moved up to the part that still
+            needs filling in.
+          </p>
+        )}
         <button
           type="submit"
           className="btn btn-primary btn-block"

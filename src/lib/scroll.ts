@@ -1,12 +1,24 @@
-/** Scroll to the top of the page, smoothly unless the user prefers reduced
- *  motion (matchMedia is unavailable in some very old browsers - fall back
- *  to an instant jump, which is always safe). */
-export function scrollToTop(): void {
-  let reduce = false
+function prefersReducedMotion(): boolean {
   try {
-    reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
   } catch {
-    reduce = true
+    // matchMedia unavailable in some very old browsers - an instant jump is
+    // always safe.
+    return true
   }
-  window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
+}
+
+/** Scroll to the top of the page, smoothly unless the user prefers reduced
+ *  motion. */
+export function scrollToTop(): void {
+  window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
+}
+
+/** Bring an element to the middle of the screen - used to carry the user to
+ *  the first field that still needs filling in when they try to submit. */
+export function scrollIntoViewGently(el: HTMLElement | null): void {
+  el?.scrollIntoView({
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    block: 'center',
+  })
 }
