@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase, thrownMessage } from '../lib/supabase'
 import {
   SPECIES,
@@ -26,7 +26,7 @@ import {
   rememberMembership,
   normalizeMembership,
 } from '../lib/membership'
-import { scrollToTop } from '../lib/scroll'
+import { scrollToTop, scrollIntoViewGently } from '../lib/scroll'
 
 const LOCATIONS: readonly LocationName[] = ['Sands', 'Marshes']
 
@@ -59,6 +59,14 @@ export function SubmitScreen() {
   )
   const [errorMsg, setErrorMsg] = useState('')
   const [showErrors, setShowErrors] = useState(false)
+
+  // Anchors for carrying the user to the first thing that still needs filling
+  // in - by the submit button, the missing field is usually off-screen.
+  const membershipBox = useRef<HTMLElement | null>(null)
+  const membershipInput = useRef<HTMLInputElement | null>(null)
+  const dateBox = useRef<HTMLElement | null>(null)
+  const locationBox = useRef<HTMLElement | null>(null)
+  const bagBox = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     rememberMembership(membership)
@@ -172,7 +180,25 @@ export function SubmitScreen() {
     e.preventDefault()
     if (!formValid) {
       setShowErrors(true)
-      if (!membershipValid) setEditingMembership(true)
+      const missingMembership = !membershipValid
+      if (missingMembership) setEditingMembership(true)
+      // Wait a beat for the inline errors (and the membership input, if it was
+      // collapsed) to render, then carry the user to the first gap. Focusing
+      // the input opens the keypad ready to type; preventScroll keeps the
+      // browser from fighting the smooth scroll.
+      setTimeout(() => {
+        const target = missingMembership
+          ? membershipBox.current
+          : !dateInRange
+            ? dateBox.current
+            : !locationValid
+              ? locationBox.current
+              : bagBox.current
+        scrollIntoViewGently(target)
+        if (missingMembership) {
+          membershipInput.current?.focus({ preventScroll: true })
+        }
+      }, 50)
       return
     }
     setStatus('saving')
@@ -263,9 +289,15 @@ export function SubmitScreen() {
         <section className="card">
           <h2 className="card-title">Visit Details</h2>
           {editingMembership ? (
-            <label className="field">
+            <label
+              className="field"
+              ref={(el) => {
+                membershipBox.current = el
+              }}
+            >
               <span className="field-label">Membership Number</span>
               <input
+                ref={membershipInput}
                 className="input"
                 type="text"
                 inputMode="numeric"
@@ -302,7 +334,12 @@ export function SubmitScreen() {
               </button>
             </div>
           )}
-          <div className="field">
+          <div
+            className="field"
+            ref={(el) => {
+              dateBox.current = el
+            }}
+          >
             <span className="field-label" id="date-label">
               Date of Visit
             </span>
@@ -345,7 +382,12 @@ export function SubmitScreen() {
           </div>
         </section>
 
-        <section className="card">
+        <section
+          className="card"
+          ref={(el) => {
+            locationBox.current = el
+          }}
+        >
           <h2 className="card-title">Location</h2>
           <Segmented
             options={LOCATIONS}
@@ -361,7 +403,12 @@ export function SubmitScreen() {
           )}
         </section>
 
-        <section className="card">
+        <section
+          className="card"
+          ref={(el) => {
+            bagBox.current = el
+          }}
+        >
           <div className="card-head">
             <h2 className="card-title">Bag</h2>
             <button
@@ -435,6 +482,12 @@ export function SubmitScreen() {
           />
         </section>
 
+        {showErrors && !formValid && !seasonClosed && (
+          <p className="field-error submit-summary" role="alert">
+            Something’s missing - the form has moved up to the part that still
+            needs filling in.
+          </p>
+        )}
         <button
           type="submit"
           className="btn btn-primary btn-block"

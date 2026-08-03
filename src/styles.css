@@ -1494,3 +1494,9 @@ button:focus-visible,
 .nil-hint {
   margin-top: 10px;
 }
+
+/* ---- Missing-info notice by the submit button ---- */
+.submit-summary {
+  text-align: center;
+  margin-top: 0;
+}
