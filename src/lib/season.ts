@@ -103,6 +103,12 @@ export function todayISO(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
+export function yesterdayISO(): string {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 /** Shift an ISO date by N months (approximate; used for grace windows). */
 export function addMonths(iso: string, months: number): string {
   const [y, m, d] = iso.split('-').map(Number)

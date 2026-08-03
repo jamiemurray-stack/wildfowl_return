@@ -69,6 +69,7 @@ export function MembersTab() {
           <input
             className="input"
             type="text"
+            inputMode="numeric"
             placeholder="e.g. 27"
             value={num}
             onChange={(e) => {

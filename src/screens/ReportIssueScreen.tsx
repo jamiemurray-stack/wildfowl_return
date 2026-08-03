@@ -156,6 +156,7 @@ export function ReportIssueScreen() {
             <input
               className="input"
               type="text"
+              inputMode="numeric"
               placeholder="e.g. 27"
               value={membership}
               onChange={(e) => setMembership(e.target.value)}

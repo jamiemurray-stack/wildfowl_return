@@ -12,7 +12,7 @@ A bottom tab bar with three tabs:
 
 | Tab | Icon | What it does |
 | --- | --- | --- |
-| **Submit** | 📋 | Members log a visit: membership number, date (within the season window), location, a stepper per species, a "Nil return" toggle, live total, and notes. Enforces limits — a species blanks out at its cap, and if the season visit or total-bird limit is reached the form closes. |
+| **Submit** | 📋 | Members log a visit: membership number (numeric keypad, remembered after first use and shown as "Submitting as …" on return visits), date (Today/Yesterday quick-picks plus a date field), location (must be chosen — no default), a stepper per species, live total, and notes. A visit with zero birds files as a **nil return** automatically — the submit button changes to "Submit nil return — shot nothing" so nothing is filed unknowingly. Enforces limits — a species blanks out at its cap, limits are re-checked against fresh totals at the moment of submission, and if the season visit or total-bird limit is reached the form closes. |
 | **Report** | ⚠️ | Report an issue — a public form to flag a safety, access, disturbance or conservation concern to the committee. |
 | **Admin** | 📊 | Password-gated panel (`M4rkJ0n3s`) with a **season selector** and sub-views: **Overview** (limit monitoring — alerts + progress bars + charts + CSV), **Returns** (view / **edit** / delete a record; CSV), **Leaderboard** (per-member season totals, sortable by any species or the total; CSV), **Issues** (unseen-report badge; CSV), **Members** (assign names to membership numbers), and **Settings** (season dates, the three limit types, a seasons table to make any season active / add the next one, and copy limits from the previous season). |
 

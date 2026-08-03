@@ -16,7 +16,7 @@
   --danger-line: #e7c4bf;
   --danger-tint: #fbeeec;
   --control-bg: #ffffff; /* inputs, stepper buttons, active segment */
-  --track-off: #cfd6d0; /* switch off-track, unlimited bar */
+  --track-off: #cfd6d0; /* unlimited limit bar */
   --disabled-bg: #e3e7e1;
   --item-active: #f7faf8;
   --secondary-active: #d9e8df;
@@ -105,24 +105,18 @@ p {
   margin: 0;
 }
 
-/* 16px form fonts prevent iOS Safari auto-zoom on focus. */
+/* >=16px form fonts prevent iOS Safari auto-zoom on focus; 17px suits
+   older eyes without breaking the layout. */
 input,
 textarea,
 button,
 select {
   font-family: inherit;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 button:focus-visible,
 .input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-/* The real checkbox inside the nil-return switch is invisible — draw its
-   keyboard focus on the track instead. */
-.switch input:focus-visible + .switch-track {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -174,7 +168,7 @@ button:focus-visible,
 /* ---- Header ---- */
 .app-header {
   text-align: center;
-  padding: 6px 4px 8px;
+  padding: 2px 4px 4px;
 }
 
 .app-title {
@@ -188,20 +182,20 @@ button:focus-visible,
 .app-subtitle {
   font-size: 15px;
   font-weight: 600;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .app-caption {
   font-size: 13px;
   color: var(--muted);
-  margin-top: 5px;
+  margin-top: 3px;
 }
 
 /* ---- Banners ---- */
 .banner {
   border-radius: var(--radius-sm);
   padding: 13px 14px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -264,7 +258,7 @@ button:focus-visible,
 
 .field-label {
   display: block;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 7px;
 }
@@ -304,7 +298,7 @@ button:focus-visible,
 .field-error {
   display: block;
   color: var(--danger-text);
-  font-size: 13px;
+  font-size: 14px;
   margin-top: 7px;
   font-weight: 500;
 }
@@ -312,7 +306,7 @@ button:focus-visible,
 .field-hint {
   display: block;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 6px;
 }
 
@@ -379,14 +373,14 @@ button:focus-visible,
 }
 
 .stepper-label {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 500;
   display: flex;
   flex-direction: column;
 }
 
 .stepper-hint {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--muted);
   margin-top: 2px;
@@ -410,12 +404,12 @@ button:focus-visible,
 }
 
 .step-btn {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 1px solid var(--line);
   background: var(--control-bg);
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1;
   color: var(--brand-dark);
   cursor: pointer;
@@ -435,71 +429,11 @@ button:focus-visible,
 }
 
 .step-value {
-  min-width: 26px;
+  min-width: 28px;
   text-align: center;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-/* ---- Toggle switch ---- */
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-  cursor: pointer;
-}
-
-.toggle-label {
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.switch {
-  position: relative;
-  width: 52px;
-  height: 31px;
-  flex: none;
-}
-
-.switch input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  margin: 0;
-  cursor: pointer;
-  z-index: 1;
-}
-
-.switch-track {
-  position: absolute;
-  inset: 0;
-  background: var(--track-off);
-  border-radius: 999px;
-  transition: background 0.15s ease;
-}
-
-.switch.is-on .switch-track {
-  background: var(--brand);
-}
-
-.switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: transform 0.15s ease;
-}
-
-.switch.is-on .switch-thumb {
-  transform: translateX(21px);
 }
 
 /* ---- Total ---- */
@@ -513,12 +447,12 @@ button:focus-visible,
 }
 
 .total-label {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .total-value {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--brand-dark);
   font-variant-numeric: tabular-nums;
@@ -531,7 +465,7 @@ button:focus-visible,
   justify-content: center;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 15px 18px;
+  padding: 16px 18px;
   font-weight: 700;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1459,8 +1393,8 @@ button:focus-visible,
   border: 1px solid var(--line);
   background: var(--bg);
   border-radius: 999px;
-  padding: 7px 14px;
-  font-size: 14px;
+  padding: 9px 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--brand-dark);
   cursor: pointer;
@@ -1469,6 +1403,12 @@ button:focus-visible,
 
 .chip:active {
   background: var(--brand-tint);
+}
+
+.chip.is-active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
 }
 
 .lb-sort-btn {
@@ -1509,18 +1449,12 @@ button:focus-visible,
   }
 }
 
-/* Targeted, not a global kill: charts render at their final size instantly,
-   the switch still changes state, banners stay. */
+/* Targeted, not a global kill: charts render at their final size instantly. */
 @media (prefers-reduced-motion: reduce) {
   .bar-fill,
   .month-bar,
   .limit-fill {
     animation: none;
-  }
-
-  .switch-track,
-  .switch-thumb {
-    transition: none;
   }
 }
 
@@ -1533,4 +1467,30 @@ button:focus-visible,
   .input:focus {
     box-shadow: 0 0 0 3px rgba(111, 191, 151, 0.25);
   }
+}
+
+/* ---- Identity row (returning members) ---- */
+.identity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.identity-text {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.identity-text strong {
+  color: var(--brand-dark);
+}
+
+/* ---- Date quick-picks ---- */
+.date-chips {
+  margin-bottom: 8px;
+}
+
+.nil-hint {
+  margin-top: 10px;
 }

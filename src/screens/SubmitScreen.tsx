@@ -13,6 +13,7 @@ import {
   captionFromDates,
   formatDate,
   todayISO,
+  yesterdayISO,
   resolveSeasonName,
 } from '../lib/season'
 import { useSettings } from '../lib/useSettings'
@@ -41,10 +42,16 @@ export function SubmitScreen() {
     useSettings()
 
   const [membership, setMembership] = useState(getRememberedMembership)
+  // A remembered number is shown as "Submitting as …" instead of an input —
+  // returning members read their identity rather than re-typing it.
+  const [editingMembership, setEditingMembership] = useState(
+    () => getRememberedMembership() === '',
+  )
   const [dateOfVisit, setDateOfVisit] = useState(todayISO)
-  const [location, setLocation] = useState<LocationName>('Sands')
+  // No default location: a pre-selected answer looks already-answered and
+  // gets skimmed past, silently filing wrong data. One tap keeps it honest.
+  const [location, setLocation] = useState<LocationName | null>(null)
   const [counts, setCounts] = useState<SpeciesCounts>(zeroCounts)
-  const [nilReturn, setNilReturn] = useState(false)
   const [notes, setNotes] = useState('')
 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
@@ -56,6 +63,10 @@ export function SubmitScreen() {
   useEffect(() => {
     rememberMembership(membership)
   }, [membership])
+
+  const clearStatus = () => {
+    if (status !== 'idle') setStatus('idle')
+  }
 
   // The database files each return by its visit date (authoritative trigger).
   // We mirror that here to show which season it lands in and apply its limits.
@@ -86,6 +97,9 @@ export function SubmitScreen() {
   )
 
   const total = sumCounts(counts)
+  // A visit with nothing shot IS the nil return — no separate toggle to find.
+  // The submit button announces it, so nothing is filed unknowingly.
+  const isNil = total === 0
 
   const visitsReached =
     season.max_visits != null && totals.returns >= season.max_visits
@@ -102,32 +116,24 @@ export function SubmitScreen() {
 
   const setCount = (key: SpeciesKey, value: number) => {
     setCounts((c) => ({ ...c, [key]: value }))
-    if (value > 0 && nilReturn) setNilReturn(false)
-    if (status !== 'idle') setStatus('idle')
-  }
-
-  const toggleNil = () => {
-    setNilReturn((prev) => {
-      const next = !prev
-      if (next) setCounts(zeroCounts())
-      return next
-    })
-    if (status !== 'idle') setStatus('idle')
+    clearStatus()
   }
 
   const resetAll = () => {
     setCounts(zeroCounts())
-    if (status !== 'idle') setStatus('idle')
+    clearStatus()
   }
+
+  const normalizedMembership = normalizeMembership(membership)
+  const knownName = memberName(normalizedMembership)
 
   const membershipValid = membership.trim() !== ''
   const dateInRange =
     dateOfVisit !== '' && dateOfVisit >= minDate && dateOfVisit <= maxDate
-  const bagValid = total > 0 || nilReturn
-  const birdsBudgetOk =
-    nilReturn || birdsRemaining == null || total <= birdsRemaining
+  const locationValid = location != null
+  const birdsBudgetOk = birdsRemaining == null || total <= birdsRemaining
   const formValid =
-    !seasonClosed && membershipValid && dateInRange && bagValid && birdsBudgetOk
+    !seasonClosed && membershipValid && dateInRange && locationValid && birdsBudgetOk
 
   /** Re-check season and species limits against fresh totals just before
    *  inserting — the totals on screen may be minutes or days old. Returns an
@@ -143,7 +149,7 @@ export function SubmitScreen() {
     if (season.max_visits != null && fresh.returns >= season.max_visits) {
       return `The ${season.name} season has reached its visit limit (${season.max_visits}).`
     }
-    if (!nilReturn) {
+    if (total > 0) {
       if (
         season.max_total_birds != null &&
         fresh.total_birds + total > season.max_total_birds
@@ -166,6 +172,7 @@ export function SubmitScreen() {
     e.preventDefault()
     if (!formValid) {
       setShowErrors(true)
+      if (!membershipValid) setEditingMembership(true)
       return
     }
     setStatus('saving')
@@ -181,11 +188,11 @@ export function SubmitScreen() {
 
     try {
       const { error } = await supabase.from('bag_returns').insert({
-        membership_number: normalizeMembership(membership),
+        membership_number: normalizedMembership,
         date_of_visit: dateOfVisit,
         location,
         ...counts,
-        nil_return: nilReturn,
+        nil_return: isNil,
         notes: notes.trim() || null,
         // season is set by the DB trigger from date_of_visit
       })
@@ -198,13 +205,18 @@ export function SubmitScreen() {
 
     setStatus('saved')
     setShowErrors(false)
+    setEditingMembership(false)
     setDateOfVisit(todayISO())
-    setLocation('Sands')
+    setLocation(null)
     setCounts(zeroCounts())
-    setNilReturn(false)
     setNotes('')
     reloadTotals()
     scrollToTop()
+  }
+
+  const setDate = (iso: string) => {
+    setDateOfVisit(iso)
+    clearStatus()
   }
 
   return (
@@ -250,38 +262,74 @@ export function SubmitScreen() {
       <form onSubmit={handleSubmit} noValidate>
         <section className="card">
           <h2 className="card-title">Visit Details</h2>
-          <label className="field">
-            <span className="field-label">Membership Number</span>
-            <input
-              className="input"
-              type="text"
-              placeholder="e.g. 27"
-              value={membership}
-              onChange={(e) => setMembership(e.target.value)}
-            />
-            {showErrors && !membershipValid && (
-              <span className="field-error">
-                Please enter your membership number.
+          {editingMembership ? (
+            <label className="field">
+              <span className="field-label">Membership Number</span>
+              <input
+                className="input"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g. 27"
+                value={membership}
+                onChange={(e) => {
+                  setMembership(e.target.value)
+                  clearStatus()
+                }}
+              />
+              {showErrors && !membershipValid && (
+                <span className="field-error">
+                  Please enter your membership number.
+                </span>
+              )}
+              {knownName && <span className="field-hint">{knownName}</span>}
+            </label>
+          ) : (
+            <div className="field identity-row">
+              <span className="identity-text">
+                Submitting as{' '}
+                <strong>
+                  {knownName
+                    ? `${knownName} (No. ${normalizedMembership})`
+                    : `member No. ${normalizedMembership}`}
+                </strong>
               </span>
-            )}
-            {memberName(normalizeMembership(membership)) && (
-              <span className="field-hint">
-                {memberName(normalizeMembership(membership))}
-              </span>
-            )}
-          </label>
-          <label className="field">
-            <span className="field-label">Date of Visit</span>
+              <button
+                type="button"
+                className="btn-link"
+                onClick={() => setEditingMembership(true)}
+              >
+                Not you?
+              </button>
+            </div>
+          )}
+          <div className="field">
+            <span className="field-label" id="date-label">
+              Date of Visit
+            </span>
+            <div className="chip-row date-chips" aria-labelledby="date-label">
+              <button
+                type="button"
+                className={`chip${dateOfVisit === todayISO() ? ' is-active' : ''}`}
+                onClick={() => setDate(todayISO())}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                className={`chip${dateOfVisit === yesterdayISO() ? ' is-active' : ''}`}
+                onClick={() => setDate(yesterdayISO())}
+              >
+                Yesterday
+              </button>
+            </div>
             <input
               className="input"
               type="date"
+              aria-labelledby="date-label"
               value={dateOfVisit}
               min={minDate}
               max={maxDate}
-              onChange={(e) => {
-                setDateOfVisit(e.target.value)
-                if (status !== 'idle') setStatus('idle')
-              }}
+              onChange={(e) => setDate(e.target.value)}
             />
             {showErrors && !dateInRange ? (
               <span className="field-error">
@@ -294,7 +342,7 @@ export function SubmitScreen() {
                 Filed under the {season.name} season.
               </span>
             )}
-          </label>
+          </div>
         </section>
 
         <section className="card">
@@ -302,9 +350,15 @@ export function SubmitScreen() {
           <Segmented
             options={LOCATIONS}
             value={location}
-            onChange={setLocation}
+            onChange={(loc) => {
+              setLocation(loc)
+              clearStatus()
+            }}
             ariaLabel="Location"
           />
+          {showErrors && !locationValid && (
+            <p className="field-error">Please choose where you went.</p>
+          )}
         </section>
 
         <section className="card">
@@ -329,7 +383,7 @@ export function SubmitScreen() {
                   key={s.key}
                   label={s.label}
                   value={counts[s.key]}
-                  disabled={nilReturn || seasonClosed || reached}
+                  disabled={seasonClosed || reached}
                   max={rem ?? undefined}
                   hint={
                     seasonClosed
@@ -346,33 +400,18 @@ export function SubmitScreen() {
             })}
           </div>
 
-          <label className="toggle-row">
-            <span className="toggle-label">Nil return (shot nothing)</span>
-            <span className={`switch${nilReturn ? ' is-on' : ''}`}>
-              <input
-                type="checkbox"
-                checked={nilReturn}
-                onChange={toggleNil}
-                disabled={seasonClosed}
-                aria-label="Nil return (shot nothing)"
-              />
-              <span className="switch-track" aria-hidden="true">
-                <span className="switch-thumb" />
-              </span>
-            </span>
-          </label>
-
           <div className="total-row">
             <span className="total-label">Total shot</span>
-            <span className="total-value">{nilReturn ? 0 : total}</span>
+            <span className="total-value">{total}</span>
           </div>
-
-          {showErrors && !bagValid && (
-            <p className="field-error">
-              Add at least one bird, or switch on “Nil return”.
+          {isNil && !seasonClosed && (
+            <p className="field-hint nil-hint">
+              Shot nothing? Leave the counts at zero — the button below files it
+              as a nil return.
             </p>
           )}
-          {showErrors && bagValid && !birdsBudgetOk && (
+
+          {showErrors && !birdsBudgetOk && (
             <p className="field-error">
               Only {birdsRemaining} more bird{birdsRemaining === 1 ? '' : 's'} can be
               logged for the {season.name} season.
@@ -389,7 +428,10 @@ export function SubmitScreen() {
             rows={3}
             placeholder="Weather, conditions, anything worth noting…"
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => {
+              setNotes(e.target.value)
+              clearStatus()
+            }}
           />
         </section>
 
@@ -402,7 +444,9 @@ export function SubmitScreen() {
             ? 'Season closed'
             : status === 'saving'
               ? 'Submitting…'
-              : 'Submit bag return'}
+              : isNil
+                ? 'Submit nil return — shot nothing'
+                : 'Submit bag return'}
         </button>
       </form>
     </div>

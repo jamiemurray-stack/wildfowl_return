@@ -31,7 +31,6 @@ export function EditReturn({
     for (const s of SPECIES) c[s.key] = record[s.key]
     return c
   })
-  const [nilReturn, setNilReturn] = useState(record.nil_return)
   const [notes, setNotes] = useState(record.notes ?? '')
   const [status, setStatus] = useState<'idle' | 'saving' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -39,22 +38,16 @@ export function EditReturn({
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const total = sumCounts(counts)
+  // Mirrors the Submit form: zero birds IS the nil return, no toggle.
+  const isNil = total === 0
 
   const membershipValid = membership.trim() !== ''
   const dateValid = dateOfVisit !== ''
-  const bagValid = total > 0 || nilReturn
-  const formValid = membershipValid && dateValid && bagValid
+  const formValid = membershipValid && dateValid
 
   const setCount = (key: SpeciesKey, value: number) => {
     setCounts((c) => ({ ...c, [key]: value }))
-    if (value > 0 && nilReturn) setNilReturn(false)
   }
-  const toggleNil = () =>
-    setNilReturn((prev) => {
-      const next = !prev
-      if (next) setCounts(zeroCounts())
-      return next
-    })
 
   const save = async () => {
     if (!formValid) {
@@ -71,7 +64,7 @@ export function EditReturn({
           date_of_visit: dateOfVisit,
           location,
           ...counts,
-          nil_return: nilReturn,
+          nil_return: isNil,
           notes: notes.trim() || null,
         })
         .eq('id', record.id)
@@ -121,6 +114,7 @@ export function EditReturn({
           <span className="field-label">Membership Number</span>
           <input
             className="input"
+            inputMode="numeric"
             value={membership}
             onChange={(e) => setMembership(e.target.value)}
           />
@@ -165,32 +159,17 @@ export function EditReturn({
               key={s.key}
               label={s.label}
               value={counts[s.key]}
-              disabled={nilReturn}
               onChange={(v) => setCount(s.key, v)}
             />
           ))}
         </div>
-        <label className="toggle-row">
-          <span className="toggle-label">Nil return (shot nothing)</span>
-          <span className={`switch${nilReturn ? ' is-on' : ''}`}>
-            <input
-              type="checkbox"
-              checked={nilReturn}
-              onChange={toggleNil}
-              aria-label="Nil return (shot nothing)"
-            />
-            <span className="switch-track" aria-hidden="true">
-              <span className="switch-thumb" />
-            </span>
-          </span>
-        </label>
         <div className="total-row">
           <span className="total-label">Total shot</span>
-          <span className="total-value">{nilReturn ? 0 : total}</span>
+          <span className="total-value">{total}</span>
         </div>
-        {showErrors && !bagValid && (
-          <p className="field-error">
-            Add at least one bird, or switch on “Nil return”.
+        {isNil && (
+          <p className="field-hint nil-hint">
+            No birds entered — saving records this visit as a nil return.
           </p>
         )}
       </section>
@@ -213,7 +192,11 @@ export function EditReturn({
         onClick={save}
         disabled={status === 'saving'}
       >
-        {status === 'saving' ? 'Saving…' : 'Save changes'}
+        {status === 'saving'
+          ? 'Saving…'
+          : isNil
+            ? 'Save as nil return — shot nothing'
+            : 'Save changes'}
       </button>
 
       <section className="card">
